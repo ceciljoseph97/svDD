@@ -1,0 +1,26 @@
+name: lsAirsim
+channels:
+  - defaults
+  - https://repo.anaconda.com/pkgs/main
+  - https://repo.anaconda.com/pkgs/r
+  - https://repo.anaconda.com/pkgs/msys2
+dependencies:
+  - defaults/win-64::blas==1.0=mkl
+  - defaults/win-64::ca-certificates==2024.7.2=haa95532_0
+  - defaults/win-64::vs2015_runtime==14.40.33807=h98bb1dd_1
+  - defaults/win-64::vc==14.40=h2eaa2aa_1
+  - defaults/win-64::intel-openmp==2023.1.0=h59b6b97_46320
+  - defaults/win-64::libffi==3.4.4=hd77b12b_1
+  - defaults/win-64::openssl==3.0.15=h827c3e9_0
+  - defaults/win-64::sqlite==3.45.3=h2bbff1b_0
+  - defaults/win-64::tbb==2021.8.0=h59b6b97_0
+  - defaults/win-64::mkl==2023.1.0=h6b88ed4_46358
+  - defaults/win-64::python==3.8.19=h1aa4202_0
+  - defaults/win-64::mkl-service==2.4.0=py38h2bbff1b_1
+  - defaults/win-64::wheel==0.43.0=py38haa95532_0
+  - defaults/win-64::numpy-base==1.24.3=py38h8a87ada_1
+  - defaults/win-64::pip==24.2=py38haa95532_0
+  - defaults/win-64::mkl_fft==1.3.8=py38h2bbff1b_0
+  - defaults/win-64::mkl_random==1.2.4=py38h59b6b97_0
+  - defaults/win-64::numpy==1.24.3=py38h79a8e48_1
+prefix: C:\Users\cecil\anaconda3\envs\lsAirsim
