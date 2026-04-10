@@ -1,0 +1,23 @@
+{
+  "best_epoch": 40,
+  "best_macro_auc": 0.5956837606837606,
+  "best_macro_auc_hungarian_aligned": 0.6741452991452993,
+  "per_class_auc": {
+    "0": 0.5993589743589743,
+    "1": 0.5938461538461538,
+    "2": 0.5938461538461538
+  },
+  "per_class_auc_hungarian_aligned": {
+    "0": 0.7916666666666667,
+    "1": 0.5938461538461538,
+    "2": 0.6369230769230769
+  },
+  "best_hungarian_acc": 0.5789473684210527,
+  "best_nmi": 0.26826357448115795,
+  "best_ari": 0.18904333605887164,
+  "n_clusters": 3,
+  "curvature": 1.0,
+  "purely_unsupervised_train": true,
+  "preprocess": "StandardScaler_train_only",
+  "center_init": "unsup_head_means_proj_ball"
+}
