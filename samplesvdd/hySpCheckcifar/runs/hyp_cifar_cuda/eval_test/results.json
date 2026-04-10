@@ -1,0 +1,16 @@
+{
+  "macro_svdd_auc": 0.7410602555555557,
+  "per_digit_svdd_auc": {
+    "0": 0.781325,
+    "1": 0.6942122222222222,
+    "2": 0.7303287222222222,
+    "3": 0.6625413888888889,
+    "4": 0.7715777222222223,
+    "5": 0.6894025555555555,
+    "6": 0.8078046666666667,
+    "7": 0.7152959444444444,
+    "8": 0.8421255555555556,
+    "9": 0.7159887777777778
+  },
+  "csv": "D:\\Doctorate\\EngineCheck\\oasplTurbojet\\SampleSvDD\\samplesvdd\\hySpCheckcifar\\runs\\hyp_cifar_cuda\\eval_test\\global_top_anomalies.csv"
+}

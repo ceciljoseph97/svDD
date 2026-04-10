@@ -1,0 +1,377 @@
+%% Coupled Hyperbolic Multi-Sphere Deep SVDD — IEEE conference format
+%% Requires: IEEEtran.cls (IEEE LaTeX templates / TeX Live: texlive-publishers)
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{subcaption}
+\usepackage{bookmark}
+\DeclareMathOperator{\arcosh}{arcosh}
+% --- PREAMBLE END ---
+
+
+%% Optional: if you use subfigures
+%% \usepackage[caption=false,font=footnotesize]{subfig}
+
+\begin{document}
+
+\title{Coupled Hyperbolic Multi-Sphere Deep SVDD}
+
+\author{
+\IEEEauthorblockN{CJ}
+\IEEEauthorblockA{\textit{Applied CS} \\
+\textit{BTU} \\
+Germany \\
+CJ}
+}
+
+\maketitle
+
+\begin{abstract}
+
+Deep SVDD is a strong one-class objective but is commonly used in one-vs-rest form, requiring one model per class and lacking a shared multi-class geometry.
+We present a coupled hyperbolic multi-sphere extension that learns class-wise hyperspheres jointly in a single shared representation.
+Our method places class embeddings in a Poincar\'e ball and optimizes four coupled terms: reconstruction, class-conditional Deep SVDD compactness, inter-class exclusion, and pairwise sphere-overlap separation.
+This yields a single model with class-aware inlier regions and a natural global anomaly score.
+We evaluate on MNIST and CIFAR-10 with the same training recipe (two-stage AE then coupled SVDD).
+\end{abstract}
+
+\begin{IEEEkeywords}
+
+Anomaly detection, deep SVDD, hyperbolic embedding, open-set recognition, Poincar\'e ball, multi-class learning.
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+Ruff et al.\ cast unsupervised anomaly detection as learning a minimum-volume hypersphere in latent space (Deep SVDD)~\cite{ruff2018deep}.
+The common setup trains one model per normal class (one-vs-rest).
+For multi-class open-set use, that duplicates parameters and does not couple class boundaries in a single geometry.
+
+We learn $K$ class-conditional \emph{hyperbolic} hyperspheres \emph{jointly} in one network: a shared representation feeds $K$ linear heads whose outputs are mapped into a Poincar\'e ball.
+Hyperbolic distances grow toward the ball boundary, which can help separate fine-grained structure inside compact regions.
+Beyond per-class SVDD compactness, By adding: (i)~\textbf{inter-class exclusion}, penalizing points of class $y$ that fall too close to another class $k$'s ball; and (ii)~\textbf{sphere overlap penalty}, discouraging geometric overlap between class spheres in hyperbolic space.
+
+\section{Related Work}
+\subsection{Deep SVDD}
+Ruff et al.\ optimize one-class compactness in latent space with soft-boundary or one-class objectives, using a fixed center and no bias terms to mitigate trivial solutions~\cite{ruff2018deep}.
+
+\subsection{Hybrid autoencoder and multi sphere SVDD}
+Combining reconstruction with multi sphere SVDD-like compactness is a common recipe to stabilize representations and avoid collapse. Deep Multi-Sphere SVDD (DMSVDD) \cite{ghafoori2020dsmvdd} addresses multi-modal normal distributions by using multiple hyperspheres, it operates in Euclidean space and lacks the explicit inter-class exclusion and hyperbolic coupling terms something we are trying to utilize in the study. Going from a flat geometry to a hyperbolic one is a natural step to model hierarchical structure and margin-heavy data.
+
+\subsection{Positioning}
+We retain the SVDD principle but formulate a \emph{joint multiclass} objective in one model with explicit class coupling and hyperbolic geometry.
+
+\section{Method}
+
+\subsection{Overview}
+Training is \textbf{two-stage}, consistent with hybrid AE\,+\,SVDD: (1)~pretrain the autoencoder on reconstruction only; (2)~run coupled optimization with SVDD, exclusion, and overlap terms while refreshing radii on a schedule (Sec.~\ref{sec:training}).
+The same loss structure is used for CHMS-SVDD on MNIST and CIFAR-10; only the convolutional AE backbone changes across datasets.
+
+\subsection{Architecture}
+Given input $x$, a shared autoencoder outputs representation and reconstruction:
+\begin{equation}
+(\mathbf{r}, \hat{x}) = f_{\theta}(x),\quad \mathbf{r}\in\mathbb{R}^{d_r}.
+\end{equation}
+For $K$ classes, class $k$ applies a linear map (no bias) and maps into the Poincar\'e ball $\mathbb{B}_c^d$ via the exponential map at the origin:
+\begin{equation}
+\mathbf{u}_k = W_k \mathbf{r},\qquad
+\mathbf{z}_k = \exp_0^c(\mathbf{u}_k),\quad k\in\{1,\dots,K\}.
+\end{equation}
+All classes share encoder/decoder parameters $\theta$; the $W_k$ induce class-conditional embeddings in hyperbolic space.
+
+Class parameters are center--radius pairs $\{(\mathbf{c}_k, R_k)\}$.
+Here $R_k>0$ is a geodesic \emph{radius}; objectives compare $R_k^2$ to squared hyperbolic distance $d_{\mathbb{H}}^2$.
+After Stage~1, set $\mathbf{c}_k$ to the class-conditional mean of embedded training points, projected into the ball; keep $\mathbf{c}_k$ \emph{fixed} during Stage~2~\cite{ruff2018deep}.
+Update $R_k$ by the $(1{-}\nu)$ quantile rule (not by backprop), as in Sec.~\ref{sec:training}.
+
+\subsection{Encoder--decoder backbones}\label{sec:backbone}
+The \emph{hyperbolic multi-sphere} wrapper is the same for both datasets: it holds a backbone $f_\theta=(\mathrm{enc}_\theta,\mathrm{dec}_\theta)$ plus $K$ linear heads $W_k\colon\mathbb{R}^{d_r}\to\mathbb{R}^{d_z}$ (bias-free) and curvature $c$.
+\textbf{MNIST} (\texttt{MNIST\_LeNet\_SVDDIAE}): input $1{\times}28{\times}28$; encoder is two $5{\times}5$ conv layers (filters $8{\to}4$) with batch norm (no affine), LeakyReLU, $2{\times}2$ max-pooling, then a fully connected layer to $\mathbf{r}\in\mathbb{R}^{d_r}$ with default $d_r{=}32$ (required divisible by $16$ for the decoder reshape); decoder mirrors via upsampling, transposed convolutions, and a sigmoid output matching scaled inputs.
+\textbf{CIFAR-10} (\texttt{CifarConvAE}): input $3{\times}32{\times}32$; encoder is three $5{\times}5$ conv stacks ($32{\to}64{\to}128$ channels) with LeakyReLU and $2{\times}2$ pooling, then $\mathrm{fc}$ to $\mathbf{r}\in\mathbb{R}^{d_r}$ (default $d_r{=}128$); decoder maps $\mathbf{r}$ back to $128{\times}4{\times}4$ and decodes with three $4{\times}4$ transposed-conv stages to $3{\times}32{\times}32$.
+Default hyperbolic embedding dimension is $d_z{=}16$ on MNIST and $d_z{=}32$ on CIFAR.
+
+\subsection{Hyperbolic distance}
+For $\mathbf{x},\mathbf{y}\in\mathbb{B}_c^d$,
+\begin{equation}
+d_{\mathbb{H}}(\mathbf{x},\mathbf{y})=
+\frac{1}{\sqrt{c}}
+\arcosh\!\left(
+1+\frac{2c\|\mathbf{x}-\mathbf{y}\|^2}
+{(1-c\|\mathbf{x}\|^2)(1-c\|\mathbf{y}\|^2)}
+\right).
+\end{equation}
+
+\subsection{Objective}
+For labeled sample $(x_i,y_i)$, define class-conditional embeddings $\mathbf{z}_{i,k}$ and hyperbolic squared distances to fixed centers:
+\begin{equation}
+\mathbf{z}_{i,k} = \exp_0^c(W_k f_{\theta}(x_i)),
+\quad
+d_{i,k}^2 = d_{\mathbb{H}}(\mathbf{z}_{i,k}, \mathbf{c}_k)^2.
+\end{equation}
+The SVDD term uses only $k=y_i$ with true hyperbolic $d_{i,y_i}^2$.
+The exclusion term sums over $k\neq y_i$, comparing each $\mathbf{z}_{i,k}$ to $\mathbf{c}_k$ (see code note below for MNIST vs.\ CIFAR distance).
+
+\subsubsection{Reconstruction loss}
+\begin{equation}
+\mathcal{L}_{\text{rec}}=
+\frac{1}{N}\sum_i \|x_i-\hat{x}_i\|_2^2.
+\end{equation}
+
+\subsubsection{Class-conditional Deep SVDD (soft-boundary)}
+This is the class-conditional analogue of Ruff et al.'s \emph{soft-boundary} objective: each term adds the explicit $R_{y_i}^2$ hull term and a hinge on violations outside the sphere~\cite{ruff2018deep}. Here $d_{i,y_i}^2$ uses the hyperbolic distance from $\mathbf{z}_{i,y_i}$ to $\mathbf{c}_{y_i}$. The radius $R_{y_i}$ is not updated by backprop; after warm-up it is set by the $(1{-}\nu)$ quantile rule in Sec.~\ref{sec:training} (Eq.~\eqref{eq:radius-update}), matching the Deep SVDD soft-boundary radius schedule.
+\begin{equation}
+\mathcal{L}_{\text{svdd}}=
+\frac{1}{N}\sum_i
+\left(
+R_{y_i}^2 + \frac{1}{\nu}\max\left(0,\ d_{i,y_i}^2 - R_{y_i}^2\right)
+\right).
+\end{equation}
+(\emph{One-class variant:} replace $\mathcal{L}_{\text{svdd}}$ by $\frac1N\sum_i d_{i,y_i}^2$.)
+
+\subsubsection{Inter-class exclusion}\label{sec:excl-margin}
+To push samples of class $y_i$ away from other classes' balls, we penalize points that lie closer than a \emph{length} margin $m_{\text{excl}}\ge 0$ beyond radius $R_k$, i.e.\ outside the sphere of radius $R_k + m_{\text{excl}}$ in the same metric. In squared-distance form (all terms have units of squared length):
+\begin{equation}
+\mathcal{L}_{\text{excl}}=
+\frac{1}{N(K-1)}
+\sum_i\sum_{k\neq y_i}
+\max\left(0,\ (R_k + m_{\text{excl}})^2 - d_{i,k}^2\right).
+\label{eq:excl}
+\end{equation}
+The released trainers implement this hinge on squared distances to non-true class centers.
+\textbf{Implementation detail:} in the MNIST CHMS-SVDD trainer, $d_{i,k}^2$ inside $\mathcal{L}_{\text{excl}}$ is computed as squared \emph{Euclidean} distance $\|\mathbf{z}_{i,k}-\mathbf{c}_k\|_2^2$ in embedding coordinates (faster); in the CIFAR-10 CHMS-SVDD trainer, $d_{i,k}^2=d_{\mathbb{H}}(\mathbf{z}_{i,k},\mathbf{c}_k)^2$ for every $k$.
+The exposition above uses hyperbolic $d_{i,k}^2$ for a single consistent geometry; the hinge shape is unchanged.
+
+\subsubsection{Pairwise overlap penalty}
+\begin{equation}
+\mathcal{L}_{\text{ov}}=
+\frac{2}{K(K-1)}\sum_{a<b}
+\max\left(
+0,\ R_a + R_b + m_{\text{ov}} - d_{\mathbb{H}}(\mathbf{c}_a,\mathbf{c}_b)
+\right),
+\end{equation}
+which discourages overlap of class spheres, providing a more robust and flexible multi-class geometry with interpretable class-wise boundaries.
+
+\subsubsection{Total loss}
+\begin{equation}
+\begin{aligned}
+\mathcal{L}={}&
+\mathcal{L}_{\text{rec}}
++\lambda_{\text{svdd}}\mathcal{L}_{\text{svdd}}
++\lambda_{\text{excl}}\mathcal{L}_{\text{excl}}\\
+&{}+\lambda_{\text{ov}}\mathcal{L}_{\text{ov}}
++\lambda_w\|\theta\|_2^2.
+\end{aligned}
+\end{equation}
+
+\subsection{Optimization and hyperparameters}\label{sec:optim}
+\paragraph{Solver}
+We use \textbf{Adam}~\cite{kingma2014adam} twice: Stage~1 runs Adam on all trainable weights but the loss depends only on the AE forward path $(\mathbf{r},\hat x)=f_\theta(x)$, so gradients update encoder/decoder; bias-free heads $W_k$ are in the optimizer state but get \emph{zero} gradient until Stage~2.
+Stage~2 runs Adam with learning rate $10^{-4}$ (default), weight decay $\lambda_w{=}10^{-6}$, on $\theta$ and $\{W_k\}$.
+Radii $R_k$ are \emph{not} gradient variables: after warm-up they are overwritten each epoch via~\eqref{eq:radius-update}.
+
+\paragraph{Schedules (defaults in code)}
+MNIST: AE pretrain $10$ epochs at $\text{lr}{=}10^{-3}$, batch size $256$; coupled phase $25$ epochs at $\text{lr}{=}10^{-4}$; radius quantiles apply after $5$ warm-up epochs.
+CIFAR-10: AE $20$ epochs at $10^{-3}$; coupled phase $40$ epochs at $10^{-4}$; warm-up $8$ epochs; batch $256$.
+Evaluation on a hold-out split can be logged every $5$ epochs (implementation detail).
+
+\paragraph{Loss weights and margins (defaults)}
+$\lambda_{\text{svdd}}{=}5{\times}10^{-5}$, $\lambda_{\text{excl}}{=}10^{-2}$, $\lambda_{\text{ov}}{=}10^{-2}$, curvature $c{=}1$, $\nu{=}0.1$, margins $m_{\text{excl}}{=}0.1$, $m_{\text{ov}}{=}0.05$.
+These trade reconstruction stability against SVDD compaction and geometric separation; they should be tuned per dataset.
+
+\subsection{Interpretation of objective terms}\label{sec:glossary}
+Table~\ref{tab:loss-glossary} summarizes notation; informal statements we adopt are listed in Sec.~\ref{sec:claims}.
+
+\begin{table}[t]
+\centering
+\caption{Terms in the coupled objective (soft-boundary mode).}
+\label{tab:loss-glossary}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Symbol & Role \\
+\midrule
+$\mathcal{L}_{\text{rec}}$ & Mean squared error $\|\hat x-x\|_2^2$; anchors $\theta$ and prevents collapse. \\
+$\max(0,\cdot)$ & Hinge (ReLU) penalty; zero if constraint satisfied, linear penalty otherwise. \\
+$\nu$ & Ruff-style parameter: at most a fraction $\nu$ of in-class points may violate $d^2{\leq}R^2$ in expectation; \\
+& also sets the $(1{-}\nu)$ quantile for $R_k$~\cite{ruff2018deep}. \\
+$R_{y_i}^2{+}\frac1\nu(\cdot)$ & Soft-boundary SVDD: fixed ``volume'' term $R^2$ plus scaled violations outside the ball. \\
+$\lambda_{\text{svdd}},\lambda_{\text{excl}},\lambda_{\text{ov}}$ & Trade off compactness \emph{vs.} cross-class separation \emph{vs.} non-overlapping centers. \\
+$m_{\text{excl}}$ & Extra geodesic slack beyond $R_k$ for \emph{foreign} class balls (exclusion). \\
+$m_{\text{ov}}$ & Minimum gap between sums of radii and center--center distance (anti-overlap). \\
+$\lambda_w\|\theta\|_2^2$ & Weight decay on trainable weights (not on $R_k$ or $\mathbf{c}_k$). \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Training protocol}\label{sec:training}
+\textbf{Stage 1 (AE pretrain):} optimize $\mathcal{L}_{\text{rec}}$ only.
+
+\textbf{Center initialization:} for each class, set $\mathbf{c}_k$ to the mean of projected embeddings and project onto the ball.
+
+\textbf{Stage 2 (joint):} optimize $\mathcal{L}$.
+For soft-boundary training, after warm-up, each \emph{radius} $R_k$ is set from the $(1-\nu)$-quantile of \emph{unsquared} hyperbolic distances for class $k$, so that $R_k^2$ equals the $(1-\nu)$-quantile of squared distances (consistent with scores $d^2-R_k^2$):
+\begin{equation}
+q_k = \operatorname{Quantile}_{1-\nu}\!\left(\bigl\{\, d_{i,k}^2 : y_i=k \,\bigr\}\right),
+\qquad
+R_k \leftarrow \sqrt{q_k}.
+\label{eq:radius-update}
+\end{equation}
+
+\subsection{Methodological claims (Currently informal)}\label{sec:claims}
+We do \emph{not} prove new generalization bounds; the following are explicit design claims that motivate the formulation.
+\begin{enumerate}
+\item \textbf{Single-network multiclass geometry.} One shared $\theta$ and hyperbolic heads yield a \emph{common} latent space in which all classes have class-conditional balls; this removes one-model-per-class duplication of one-vs-rest Deep SVDD while keeping per-class scores.
+\item \textbf{Coupling beyond SVDD.} Exclusion and overlap terms are \emph{geometric regularizers}: they reduce ambiguous regions where an inlier for class $y$ lies inside another class's ball, and they separate class prototypes in $d_{\mathbb{H}}$, which empirically helps open-set behavior when combined with $s_{\text{global}}$.
+\item \textbf{Hyperbolic modeling choice.} The Poincar\'e ball embeds hierarchical or margin-heavy structure with bounded diameter; we claim it is a \emph{useful} inductive bias for multi-class hypersphere packing, not that it is uniquely optimal for all tabular or image domains.
+\item \textbf{Inference semantics.} With soft-boundary scores $s_k{=}d_{\mathbb{H}}^2{-}R_k^2$, minimizing $s_k$ mimics choosing the ``nearest'' class ball; $\max(0,\min_k s_k)$ treats depth inside \emph{all} balls as non-anomalous and flags points outside every ball---a consensus open-set heuristic, not a calibrated probability.
+\end{enumerate}
+
+\section{Inference}
+Per-class score:
+\begin{equation}
+s_k(x)=d_{\mathbb{H}}(\mathbf{z}_k(x),\mathbf{c}_k)^2 - R_k^2.
+\end{equation}
+Class prediction:
+\begin{equation}
+\hat{y}(x)=\arg\min_k s_k(x).
+\end{equation}
+Global anomaly score:
+\begin{equation}
+s_{\text{global}}(x)=\max\left(0,\min_k s_k(x)\right).
+\end{equation}
+If all $s_k$ are positive, the sample lies outside every learned class sphere.
+
+
+\section{Implementation}
+.
+ follows Deep SVDD-style training (AE representation, fixed centers, no bias on last linear maps in the original SVDD reference) with extensions above.
+CHMS-SVDD implementation provides MNIST/CIFAR-10 training, evaluation, t-SNE, and Poincar\'e visualizations.
+Checkpoints store $\theta$, $\mathbf{c}_k$, $R_k$, curvature $c$, and objective flags.
+
+\section{Experiments (outline, requirements -  Draft)}
+\subsection{Datasets}
+MNIST and CIFAR-10 with $K{=}10$ and a one-class / open-set evaluation protocol.
+
+Table~\ref{tab:results_combined} summarizes per-class one-vs-rest AUC for classical baselines and our hyperbolic-coupled variants (CHMS-SVDD and ablations).
+
+
+    \begin{figure}[htbp]
+        \centering
+        % MNIST (Top)
+        \begin{subfigure}[b]{0.3\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{D:/Doctorate/EngineCheck/oasplTurbojet/SampleSvDD/samplesvdd/hySpCheck/runs/hyp_multi_cuda/inclass_mnist_all/inclass_extremes_mnist_combined.png}
+            \caption{MNIST: most normal (left) vs. most anomalous (right)}
+            \label{fig:mnist_anomalies}
+        \end{subfigure}
+        
+        \vspace{1em} % Space between the two sets of images
+        
+        % CIFAR-10 (Bottom)
+        \begin{subfigure}[b]{0.3\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{D:/Doctorate/EngineCheck/oasplTurbojet/SampleSvDD/samplesvdd/hySpCheckcifar/runs/hyp_cifar_cuda/inclass_cifar_all/inclass_extremes_cifar_combined.png}
+            \caption{CIFAR-10: most normal (left) vs. most anomalous (right)}
+            \label{fig:cifar_anomalies}
+        \end{subfigure}
+        
+        \caption{Most normal (left) and most anomalous (right) in-class test examples ranked by class-conditional soft-boundary scores $s_k=d_{\mathbb{H}}^2-R_k^2$ (coupled hyperbolic multi-sphere model) for MNIST (top) and CIFAR-10 (bottom); see~\cite{ruff2018deep} for baseline Deep SVDD.}
+        \label{fig:svdd_results_visual}
+    \end{figure}
+
+    \begin{figure}[htbp]
+        \centering
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{D:/Doctorate/EngineCheck/oasplTurbojet/SampleSvDD/samplesvdd/hySpCheck/runs/aeRun/tsne/tsne_rep_digits_only.png}
+            \caption{AE-pretrain only: t-SNE of encoder representation (\texttt{rep}).}
+            \label{fig:mnist_tsne_ae_pretrain}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{D:/Doctorate/EngineCheck/oasplTurbojet/SampleSvDD/samplesvdd/hySpCheck/runs/hyp_multi_cuda/tsne/tsne_hyp_zself_inside_outside.png}
+            \caption{After coupled SVDD: t-SNE of hyperbolic self-projection \texttt{z\_self}.}
+            \label{fig:mnist_tsne_after_svdd}
+        \end{subfigure}
+        \caption{Why SVDD after AE pretraining is useful on MNIST. AE-pretrain (\texttt{rep}) shows partial class structure but substantial overlap, while coupled hyperbolic SVDD (\texttt{z\_self}) yields tighter, class-consistent clusters with clearer separation.}
+        \label{fig:mnist_tsne_ae_vs_svdd}
+    \end{figure}
+
+    \noindent AE pretraining learns a general representation, but class boundaries are still diffuse. The SVDD stage (with class-conditioned hyperbolic heads and sphere constraints) reshapes that space into compact class regions, which is exactly the structure used by the downstream anomaly score.
+
+    
+\subsection{Metrics}
+Macro AUC from class-wise one-vs-rest scores; global anomaly ranking via $s_{\text{global}}$.
+
+% Combined baseline + ablation table
+\begin{table*}[t]
+\centering
+\caption{Per-class anomaly detection AUC (\%) for classical baselines and our hyperbolic-coupled variants. Left block: classical baselines. Right block: hyperbolic-coupled model (CHMS-SVDD) and ablations.}
+\scriptsize
+\setlength{\tabcolsep}{1pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llccccc|cccc@{}}
+\toprule
+\textbf{Dataset} & \textbf{Class}
+& \textbf{OC-SVM} & \textbf{KDE} & \textbf{IF} & \textbf{DCAE} & \textbf{Deep SVDD}
+& \multicolumn{4}{c}{\textbf{Hyperbolic-coupled}} \\
+\cmidrule(lr){8-11}
+& & & & & & &\textbf{CHMS-SVDD} & \textbf{no\_excl} & \textbf{no\_ov} & \textbf{indep} \\
+\midrule
+\textbf{MNIST} & 0 & 98.6 & 97.1 & 98.0 & 96.6 & 98.0 & \textbf{98.5} & 98.4 & 98.5 & 98.3 \\
+& 1 & 99.5 & 98.9 & 97.3 & 99.2 & 99.7 & \textbf{99.9} & 99.8 & 99.9 & 99.8 \\
+& 2 & 82.5 & 79.0 & 88.6 & 85.0 & 91.7 & \textbf{94.2} & 88.4 & 89.2 & 83.1 \\
+& 3 & 88.1 & 86.2 & 89.9 & 88.7 & 91.9 & \textbf{94.2} & 89.7 & 91.0 & 90.0 \\
+& 4 & 94.9 & 87.9 & 92.7 & 89.4 & 94.9 & 95.3 & 93.3 & \textbf{96.2} & 92.7 \\
+& 5 & 77.1 & 73.8 & 85.5 & 88.3 & \textbf{88.5} & 87.7 & 89.7 & 88.5 & \textbf{91.2} \\
+& 6 & 96.5 & 87.6 & 95.6 & 94.7 & 98.3 & \textbf{98.6} & 97.9 & 97.8 & 96.8 \\
+& 7 & 93.7 & 91.4 & 92.0 & 93.5 & \textbf{94.6} & 94.2 & 93.4 & 95.0 & \textbf{95.5} \\
+& 8 & 88.9 & 79.2 & 89.9 & 84.9 & \textbf{93.9} & \textbf{93.8} & 91.3 & 92.6 & 91.4 \\
+& 9 & 93.1 & 88.2 & 93.5 & 92.4 & \textbf{96.5} & \textbf{95.5} & 93.6 & 94.6 & 94.5 \\
+\midrule
+\textbf{CIFAR-10} & 0 (Airplane) & 61.6 & 61.2 & 60.1 & 67.1 & 61.7 & 78.1 & 63.8 & \textbf{78.6} & 62.2 \\
+& 1 (Automobile) & 63.8 & 64.0 & 50.8 & 54.7 & 65.9 & 69.4 & 44.3 & \textbf{71.1} & 44.4 \\
+& 2 (Bird) & 50.0 & 50.1 & 49.2 & 52.9 & 50.8 & \textbf{73.0} & 64.0 & 72.8 & 64.9 \\
+& 3 (Cat) & 55.9 & 56.4 & 55.1 & 54.5 & 59.1 & 66.3 & 59.0 & \textbf{66.8} & 58.9 \\
+& 4 (Deer) & 66.0 & 66.2 & 49.8 & 65.1 & 60.9 & 77.2 & 71.6 & \textbf{77.9} & 71.1 \\
+& 5 (Dog) & 62.4 & 62.4 & 58.5 & 60.3 & 65.7 & \textbf{68.9} & 62.8 & 67.4 & 62.6 \\
+& 6 (Frog) & 74.7 & 74.9 & 42.9 & 58.5 & 67.7 & \textbf{80.8} & 70.1 & 79.9 & 71.8 \\
+& 7 (Horse) & 62.6 & 62.6 & 55.1 & 62.5 & 67.3 & 71.5 & 58.5 & \textbf{71.7} & 57.3 \\
+& 8 (Ship) & 74.9 & 75.1 & 74.2 & 75.8 & 75.9 & 84.2 & 74.1 & \textbf{84.3} & 73.9 \\
+& 9 (Truck) & 75.9 & 76.0 & 58.9 & 66.5 & \textbf{73.1} & 71.6 & 50.3 & \textbf{71.9} & 48.8 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+\subsection{Ablations}
+Remove $\mathcal{L}_{\text{excl}}$ or $\mathcal{L}_{\text{ov}}$ and compare independent one-vs-rest models vs.\ the coupled model under hyperbolic scoring. The right block of Table~\ref{tab:results_combined} shows how CHMS-SVDD and its ablations trade off per-class AUC; on CIFAR-10, the \texttt{no\_ov} variant often yields the highest class-wise AUC.
+
+\section{Conclusion}
+We described CHMS-SVDD, a coupled hyperbolic multi-sphere extension of Deep SVDD that preserves class compactness while modeling inter-class exclusion and sphere separation, yielding a unified multiclass/open-set objective in a single model.
+
+\section*{Acknowledgment}
+
+
+\bibliographystyle{IEEEtran}
+\begin{thebibliography}{00}
+
+\bibitem{ruff2018deep}
+L.~Ruff, R.~Vandermeulen, N.~Goernitz, L.~Deecke, S.~A. Siddiqui, A.~Binder, E.~M\"uller, and M.~Kloft,
+``Deep one-class classification,''
+in \emph{Proc.\ Int.\ Conf.\ Mach.\ Learn. (ICML)}, 2018, pp.\ 4393--4402.
+
+\bibitem{kingma2014adam}
+D.~P.~Kingma and J.~Ba,
+``Adam: A method for stochastic optimization,''
+in \emph{Proc.\ Int.\ Conf.\ Learn.\ Representations (ICLR)}, 2015.
+
+\end{thebibliography}
+
+\end{document}

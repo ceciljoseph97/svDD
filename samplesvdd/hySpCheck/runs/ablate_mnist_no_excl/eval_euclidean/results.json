@@ -1,0 +1,16 @@
+{
+  "macro_svdd_auc": 0.9344403570884385,
+  "per_digit_svdd_auc": {
+    "0": 0.9840080988763641,
+    "1": 0.9980971310970608,
+    "2": 0.884140152526639,
+    "3": 0.8965778711304316,
+    "4": 0.932888149095839,
+    "5": 0.8968779303927907,
+    "6": 0.9687167288207071,
+    "7": 0.934821178683369,
+    "8": 0.9124696216887641,
+    "9": 0.9358067085724198
+  },
+  "csv": "D:\\Doctorate\\EngineCheck\\oasplTurbojet\\SampleSvDD\\samplesvdd\\hySpCheck\\runs\\ablate_mnist_no_excl\\eval_euclidean\\global_top_anomalies.csv"
+}

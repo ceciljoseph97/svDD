@@ -1,0 +1,20 @@
+{
+  "mnist_runs_dir": "D:\\Doctorate\\EngineCheck\\oasplTurbojet\\SampleSvDD\\samplesvdd\\hySpCheck\\runs",
+  "cifar_runs_dir": "D:\\Doctorate\\EngineCheck\\oasplTurbojet\\SampleSvDD\\samplesvdd\\hySpCheckcifar\\runs",
+  "out_dir": "D:\\Doctorate\\EngineCheck\\oasplTurbojet\\SampleSvDD\\samplesvdd\\ablation_summaries",
+  "train_only": true,
+  "mnist_run_count": 6,
+  "cifar_run_count": 6,
+  "written": [
+    "D:\\Doctorate\\EngineCheck\\oasplTurbojet\\SampleSvDD\\samplesvdd\\ablation_summaries\\summary_mnist_runs.csv",
+    "D:\\Doctorate\\EngineCheck\\oasplTurbojet\\SampleSvDD\\samplesvdd\\ablation_summaries\\summary_cifar_runs.csv",
+    "D:\\Doctorate\\EngineCheck\\oasplTurbojet\\SampleSvDD\\samplesvdd\\ablation_summaries\\summary_all_runs.csv",
+    "D:\\Doctorate\\EngineCheck\\oasplTurbojet\\SampleSvDD\\samplesvdd\\ablation_summaries\\summary_mnist_runs.md",
+    "D:\\Doctorate\\EngineCheck\\oasplTurbojet\\SampleSvDD\\samplesvdd\\ablation_summaries\\summary_cifar_runs.md",
+    "D:\\Doctorate\\EngineCheck\\oasplTurbojet\\SampleSvDD\\samplesvdd\\ablation_summaries\\summary_all_runs.md",
+    "D:\\Doctorate\\EngineCheck\\oasplTurbojet\\SampleSvDD\\samplesvdd\\ablation_summaries\\summary_mnist_per_class_runs.md",
+    "D:\\Doctorate\\EngineCheck\\oasplTurbojet\\SampleSvDD\\samplesvdd\\ablation_summaries\\summary_cifar_per_class_runs.md",
+    "D:\\Doctorate\\EngineCheck\\oasplTurbojet\\SampleSvDD\\samplesvdd\\ablation_summaries\\summary_all_per_class_runs.md",
+    "D:\\Doctorate\\EngineCheck\\oasplTurbojet\\SampleSvDD\\samplesvdd\\ablation_summaries\\summary_pivot_per_class.md"
+  ]
+}

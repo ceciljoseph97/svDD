@@ -1,0 +1,352 @@
+(lsAirsim) D:\Doctorate\EngineCheck\oasplTurbojet>python "D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\samplesvdd\hySpCheck\train_hyp_mnist_multi.py" --mnist_processed_dir "D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\CVAEChecked\Data\MNIST_processed" --xp_path "D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\samplesvdd\hySpCheck\runs\ablate_mnist_full" --device cuda --digits all --skip_ae_pretrain --ae_stage1_checkpoint_path "D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\samplesvdd\hySpCheck\runs\ae_pretrain_mnist\ae_stage1.pth" --ae_n_epochs 100 --svdd_n_epochs 50 --lambda_excl 0.01 --lambda_overlap 0.01
+[AE] skipped pretrain; loaded stage-1 checkpoint: D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\samplesvdd\hySpCheck\runs\ae_pretrain_mnist\ae_stage1.pth
+[SVDD-H] 001/50 loss=1.814815 rec=1.748376 svdd=1328.781974 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 002/50 loss=1.807315 rec=1.748203 svdd=1182.229023 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 003/50 loss=1.800414 rec=1.746977 svdd=1068.747001 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 004/50 loss=1.794401 rec=1.745543 svdd=977.165592 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 005/50 loss=1.789536 rec=1.744236 svdd=906.001798 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[EVAL] epoch=005 macro_auc=0.8693817539089004
+[SVDD-H] 006/50 loss=1.785943 rec=1.743242 svdd=854.004000 excl=0.000000 overlap=0.000000 R_mean=9.8927
+[SVDD-H] 007/50 loss=1.881297 rec=1.743656 svdd=133.191391 excl=0.191321 overlap=12.906756 R_mean=10.3833
+[SVDD-H] 008/50 loss=1.888016 rec=1.741817 svdd=130.783340 excl=0.077993 overlap=13.888019 R_mean=10.6730
+[SVDD-H] 009/50 loss=1.893859 rec=1.742036 svdd=132.157026 excl=0.054296 overlap=14.467223 R_mean=10.8847
+[SVDD-H] 010/50 loss=1.898181 rec=1.742092 svdd=134.818829 excl=0.044217 overlap=14.890636 R_mean=11.0627
+[EVAL] epoch=010 macro_auc=0.950202122999473
+[SVDD-H] 011/50 loss=1.900828 rec=1.741075 svdd=137.676889 excl=0.040309 overlap=15.246650 R_mean=11.2190
+[SVDD-H] 012/50 loss=1.905780 rec=1.742765 svdd=140.653329 excl=0.038946 overlap=15.559367 R_mean=11.3609
+[SVDD-H] 013/50 loss=1.906010 rec=1.740011 svdd=143.779388 excl=0.038054 overlap=15.843029 R_mean=11.4968
+[SVDD-H] 014/50 loss=1.906841 rec=1.737945 svdd=147.037609 excl=0.039396 overlap=16.115013 R_mean=11.6277
+[SVDD-H] 015/50 loss=1.910930 rec=1.739236 svdd=150.234955 excl=0.041399 overlap=16.376766 R_mean=11.7535
+[EVAL] epoch=015 macro_auc=0.9590642328962125 - This looks promising - But after this Inter class exclusion penalty is making loss suffer
+[SVDD-H] 016/50 loss=1.912186 rec=1.737791 svdd=153.344427 excl=0.044294 overlap=16.628408 R_mean=11.8749
+[SVDD-H] 017/50 loss=1.913659 rec=1.736670 svdd=156.564702 excl=0.044930 overlap=16.871141 R_mean=11.9937
+[SVDD-H] 018/50 loss=1.917005 rec=1.737440 svdd=159.855832 excl=0.048558 overlap=17.108665 R_mean=12.1110
+[SVDD-H] 019/50 loss=1.918879 rec=1.736767 svdd=163.142857 excl=0.052114 overlap=17.343351 R_mean=12.2262
+[SVDD-H] 020/50 loss=1.919602 rec=1.734988 svdd=166.353648 excl=0.055728 overlap=17.573812 R_mean=12.3408
+[EVAL] epoch=020 macro_auc=0.9507303217266116
+[SVDD-H] 021/50 loss=1.921862 rec=1.734751 svdd=169.531821 excl=0.060641 overlap=17.802830 R_mean=12.4523
+[SVDD-H] 022/50 loss=1.926452 rec=1.736897 svdd=172.812627 excl=0.065498 overlap=18.025906 R_mean=12.5630
+[SVDD-H] 023/50 loss=1.926560 rec=1.734573 svdd=176.011136 excl=0.071318 overlap=18.247335 R_mean=12.6726
+[SVDD-H] 024/50 loss=1.927562 rec=1.733161 svdd=179.250513 excl=0.077238 overlap=18.466606 R_mean=12.7822
+[SVDD-H] 025/50 loss=1.932845 rec=1.736019 svdd=182.482752 excl=0.084412 overlap=18.685780 R_mean=12.8909
+[EVAL] epoch=025 macro_auc=0.9099011487934126
+[SVDD-H] 026/50 loss=1.932714 rec=1.733465 svdd=185.812336 excl=0.092802 overlap=18.903030 R_mean=13.0005
+[SVDD-H] 027/50 loss=1.934148 rec=1.732410 svdd=189.210178 excl=0.105531 overlap=19.122225 R_mean=13.1103
+[SVDD-H] 028/50 loss=1.935753 rec=1.731516 svdd=192.610918 excl=0.118646 overlap=19.342001 R_mean=13.2206
+[SVDD-H] 029/50 loss=1.938371 rec=1.731583 svdd=195.962783 excl=0.136423 overlap=19.562557 R_mean=13.3312
+[SVDD-H] 030/50 loss=1.941010 rec=1.731639 svdd=199.075284 excl=0.157981 overlap=19.783794 R_mean=13.4423
+[EVAL] epoch=030 macro_auc=0.8444863546924836
+[SVDD-H] 031/50 loss=1.944075 rec=1.732056 svdd=202.386395 excl=0.184071 overlap=20.005960 R_mean=13.5530
+[SVDD-H] 032/50 loss=1.945938 rec=1.731245 svdd=205.558878 excl=0.214129 overlap=20.227360 R_mean=13.6634
+[SVDD-H] 033/50 loss=1.949100 rec=1.731655 svdd=208.624740 excl=0.253376 overlap=20.448023 R_mean=13.7739
+[SVDD-H] 034/50 loss=1.949620 rec=1.729295 svdd=211.369315 excl=0.306533 overlap=20.669065 R_mean=13.8822
+[SVDD-H] 035/50 loss=1.954335 rec=1.731044 svdd=213.744344 excl=0.374734 overlap=20.885715 R_mean=13.9878
+[EVAL] epoch=035 macro_auc=0.764617271585357
+[SVDD-H] 036/50 loss=1.955794 rec=1.729121 svdd=215.545105 excl=0.492622 overlap=21.096924 R_mean=14.0865
+[SVDD-H] 037/50 loss=1.960408 rec=1.729408 svdd=216.084892 excl=0.725251 overlap=21.294338 R_mean=14.1725
+[SVDD-H] 038/50 loss=1.964873 rec=1.729807 svdd=216.300728 excl=0.958844 overlap=21.466219 R_mean=14.2448
+[SVDD-H] 039/50 loss=1.964856 rec=1.725959 svdd=216.157799 excl=1.198043 overlap=21.610905 R_mean=14.3042
+[SVDD-H] 040/50 loss=1.970132 rec=1.727905 svdd=215.980291 excl=1.413155 overlap=21.729624 R_mean=14.3536
+[EVAL] epoch=040 macro_auc=0.6405088844029689
+[SVDD-H] 041/50 loss=1.971109 rec=1.726633 svdd=216.694982 excl=1.535596 overlap=21.828472 R_mean=14.3979
+[SVDD-H] 042/50 loss=1.972788 rec=1.726808 svdd=217.804428 excl=1.591816 overlap=21.917212 R_mean=14.4406
+[SVDD-H] 043/50 loss=1.972738 rec=1.725622 svdd=218.929981 excl=1.614359 overlap=22.002514 R_mean=14.4823
+[SVDD-H] 044/50 loss=1.974555 rec=1.726319 svdd=220.216673 excl=1.636660 overlap=22.085848 R_mean=14.5233
+[SVDD-H] 045/50 loss=1.975525 rec=1.726103 svdd=221.268222 excl=1.668085 overlap=22.167822 R_mean=14.5631
+[EVAL] epoch=045 macro_auc=0.6215816827508698
+[SVDD-H] 046/50 loss=1.977454 rec=1.726659 svdd=222.053975 excl=1.721720 overlap=22.247492 R_mean=14.6001
+[SVDD-H] 047/50 loss=1.978068 rec=1.725955 svdd=222.822747 excl=1.775694 overlap=22.321541 R_mean=14.6339
+[SVDD-H] 048/50 loss=1.976987 rec=1.723647 svdd=223.401849 excl=1.827809 overlap=22.389208 R_mean=14.6659
+[SVDD-H] 049/50 loss=1.980462 rec=1.726167 svdd=224.571431 excl=1.853524 overlap=22.453093 R_mean=14.6973
+[SVDD-H] 050/50 loss=1.980393 rec=1.725300 svdd=225.697331 excl=1.864941 overlap=22.515869 R_mean=14.7294
+[EVAL] epoch=050 macro_auc=0.6383532046239498
+{
+  "best_epoch": 15,
+  "best_macro_auc": 0.9590642328962125,
+  "per_digit_best_auc": {
+    "0": 0.9826491797479647,
+    "1": 0.9970411226444184,
+    "2": 0.927043197657779,
+    "3": 0.9652324979793868,
+    "4": 0.9437451320383183,
+    "5": 0.910082329928055,
+    "6": 0.994393357797517,
+    "7": 0.9811004776438534,
+    "8": 0.9305520864274205,
+    "9": 0.9588029470974103
+  },
+  "curvature": 1.0,
+  "objective": "soft-boundary",
+  "lambda_excl": 0.01,
+  "margin_excl": 0.1,
+  "lambda_overlap": 0.01,
+  "margin_overlap": 0.05
+}
+
+(lsAirsim) D:\Doctorate\EngineCheck\oasplTurbojet>
+(lsAirsim) D:\Doctorate\EngineCheck\oasplTurbojet>
+(lsAirsim) D:\Doctorate\EngineCheck\oasplTurbojet>
+(lsAirsim) D:\Doctorate\EngineCheck\oasplTurbojet>python "D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\samplesvdd\hySpCheck\train_hyp_mnist_multi.py" --mnist_processed_dir "D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\CVAEChecked\Data\MNIST_processed" --xp_path "D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\samplesvdd\hySpCheck\runs\ablate_mnist_no_excl" --device cuda --digits all --skip_ae_pretrain --ae_stage1_checkpoint_path "D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\samplesvdd\hySpCheck\runs\ae_pretrain_mnist\ae_stage1.pth" --ae_n_epochs 100 --svdd_n_epochs 50 --lambda_excl 0 --lambda_overlap 0.01
+[AE] skipped pretrain; loaded stage-1 checkpoint: D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\samplesvdd\hySpCheck\runs\ae_pretrain_mnist\ae_stage1.pth
+[SVDD-H] 001/50 loss=1.815350 rec=1.748888 svdd=1329.227702 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 002/50 loss=1.805987 rec=1.746837 svdd=1182.994151 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 003/50 loss=1.800607 rec=1.747099 svdd=1070.167066 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 004/50 loss=1.794809 rec=1.745857 svdd=979.042924 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 005/50 loss=1.790392 rec=1.745001 svdd=907.806400 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[EVAL] epoch=005 macro_auc=0.8685479494525223
+[SVDD-H] 006/50 loss=1.788731 rec=1.745967 svdd=855.273834 excl=0.000000 overlap=0.000000 R_mean=9.9075
+[SVDD-H] 007/50 loss=1.877193 rec=1.742784 svdd=100.911684 excl=4.360893 overlap=12.936378 R_mean=9.6829
+[SVDD-H] 008/50 loss=1.873388 rec=1.743605 svdd=98.226957 excl=2.912107 overlap=12.487162 R_mean=9.6384
+[SVDD-H] 009/50 loss=1.870465 rec=1.741634 svdd=96.984744 excl=2.834939 overlap=12.398142 R_mean=9.5888
+[SVDD-H] 010/50 loss=1.869028 rec=1.741249 svdd=95.757780 excl=2.744683 overlap=12.299048 R_mean=9.5324
+[EVAL] epoch=010 macro_auc=0.865435399919698
+[SVDD-H] 011/50 loss=1.867038 rec=1.740454 svdd=94.451154 excl=2.604073 overlap=12.186183 R_mean=9.4751
+[SVDD-H] 012/50 loss=1.864915 rec=1.739543 svdd=93.100865 excl=2.484606 overlap=12.071677 R_mean=9.4144
+[SVDD-H] 013/50 loss=1.864365 rec=1.740275 svdd=91.780828 excl=2.357123 overlap=11.950130 R_mean=9.3540
+[SVDD-H] 014/50 loss=1.861282 rec=1.738468 svdd=90.399021 excl=2.224705 overlap=11.829428 R_mean=9.2893
+[SVDD-H] 015/50 loss=1.859241 rec=1.737792 svdd=88.998097 excl=2.084279 overlap=11.699916 R_mean=9.2254
+[EVAL] epoch=015 macro_auc=0.8765434952332025
+[SVDD-H] 016/50 loss=1.859382 rec=1.739279 svdd=87.620359 excl=1.942198 overlap=11.572281 R_mean=9.1611
+[SVDD-H] 017/50 loss=1.854889 rec=1.736141 svdd=86.244944 excl=1.805111 overlap=11.443558 R_mean=9.0974
+[SVDD-H] 018/50 loss=1.854817 rec=1.737409 svdd=84.915987 excl=1.688433 overlap=11.316147 R_mean=9.0354
+[SVDD-H] 019/50 loss=1.853255 rec=1.737151 svdd=83.638504 excl=1.554547 overlap=11.192238 R_mean=8.9764
+[SVDD-H] 020/50 loss=1.851838 rec=1.736975 svdd=82.412844 excl=1.463254 overlap=11.074293 R_mean=8.9173
+[EVAL] epoch=020 macro_auc=0.890150556260161
+[SVDD-H] 021/50 loss=1.849111 rec=1.735489 svdd=81.215457 excl=1.347630 overlap=10.956063 R_mean=8.8635
+[SVDD-H] 022/50 loss=1.846044 rec=1.733556 svdd=80.095743 excl=1.251879 overlap=10.848330 R_mean=8.8128
+[SVDD-H] 023/50 loss=1.847136 rec=1.735711 svdd=79.099037 excl=1.170599 overlap=10.747016 R_mean=8.7671
+[SVDD-H] 024/50 loss=1.847924 rec=1.737460 svdd=78.172299 excl=1.113105 overlap=10.655555 R_mean=8.7232
+[SVDD-H] 025/50 loss=1.843502 rec=1.733959 svdd=77.310589 excl=1.039963 overlap=10.567742 R_mean=8.6856
+[EVAL] epoch=025 macro_auc=0.9003275028170219
+[SVDD-H] 026/50 loss=1.843020 rec=1.734267 svdd=76.547915 excl=0.997155 overlap=10.492549 R_mean=8.6497
+[SVDD-H] 027/50 loss=1.841270 rec=1.733269 svdd=75.862780 excl=0.946859 overlap=10.420857 R_mean=8.6193
+[SVDD-H] 028/50 loss=1.838785 rec=1.731423 svdd=75.240789 excl=0.909867 overlap=10.359981 R_mean=8.5919
+[SVDD-H] 029/50 loss=1.839641 rec=1.732854 svdd=74.705412 excl=0.880352 overlap=10.305176 R_mean=8.5687
+[SVDD-H] 030/50 loss=1.839940 rec=1.733640 svdd=74.234335 excl=0.864443 overlap=10.258799 R_mean=8.5475
+[EVAL] epoch=030 macro_auc=0.9117296848128712
+[SVDD-H] 031/50 loss=1.836084 rec=1.730229 svdd=73.826197 excl=0.847653 overlap=10.216437 R_mean=8.5296
+[SVDD-H] 032/50 loss=1.834993 rec=1.729515 svdd=73.460019 excl=0.843179 overlap=10.180542 R_mean=8.5133
+[SVDD-H] 033/50 loss=1.837064 rec=1.731928 svdd=73.132015 excl=0.835996 overlap=10.147929 R_mean=8.4992
+[SVDD-H] 034/50 loss=1.837030 rec=1.732188 svdd=72.860173 excl=0.836948 overlap=10.119874 R_mean=8.4867
+[SVDD-H] 035/50 loss=1.834001 rec=1.729422 svdd=72.622045 excl=0.841632 overlap=10.094760 R_mean=8.4765
+[EVAL] epoch=035 macro_auc=0.9194987919866925
+[SVDD-H] 036/50 loss=1.833471 rec=1.729107 svdd=72.399740 excl=0.853395 overlap=10.074450 R_mean=8.4672
+[SVDD-H] 037/50 loss=1.833657 rec=1.729487 svdd=72.212126 excl=0.861643 overlap=10.055870 R_mean=8.4593
+[SVDD-H] 038/50 loss=1.830867 rec=1.726865 svdd=72.040290 excl=0.876126 overlap=10.039940 R_mean=8.4529
+[SVDD-H] 039/50 loss=1.834325 rec=1.730456 svdd=71.910187 excl=0.895237 overlap=10.027282 R_mean=8.4460
+[SVDD-H] 040/50 loss=1.830381 rec=1.726658 svdd=71.778099 excl=0.906035 overlap=10.013428 R_mean=8.4409
+[EVAL] epoch=040 macro_auc=0.927016031889196
+[SVDD-H] 041/50 loss=1.833054 rec=1.729438 svdd=71.670037 excl=0.922808 overlap=10.003299 R_mean=8.4361
+[SVDD-H] 042/50 loss=1.832576 rec=1.729062 svdd=71.562880 excl=0.941500 overlap=9.993605 R_mean=8.4317
+[SVDD-H] 043/50 loss=1.827651 rec=1.724230 svdd=71.468601 excl=0.951944 overlap=9.984750 R_mean=8.4279
+[SVDD-H] 044/50 loss=1.829315 rec=1.725973 svdd=71.394819 excl=0.967794 overlap=9.977291 R_mean=8.4247
+[SVDD-H] 045/50 loss=1.829256 rec=1.725983 svdd=71.305910 excl=0.990166 overlap=9.970795 R_mean=8.4213
+[EVAL] epoch=045 macro_auc=0.9307769272064486
+[SVDD-H] 046/50 loss=1.828748 rec=1.725545 svdd=71.246612 excl=0.997960 overlap=9.964026 R_mean=8.4184
+[SVDD-H] 047/50 loss=1.829081 rec=1.725939 svdd=71.187017 excl=1.017043 overlap=9.958242 R_mean=8.4159
+[SVDD-H] 048/50 loss=1.828712 rec=1.725623 svdd=71.129923 excl=1.031134 overlap=9.953286 R_mean=8.4134
+[SVDD-H] 049/50 loss=1.827445 rec=1.724409 svdd=71.075763 excl=1.043822 overlap=9.948210 R_mean=8.4114
+[SVDD-H] 050/50 loss=1.827828 rec=1.724835 svdd=71.038722 excl=1.058299 overlap=9.944110 R_mean=8.4096
+[EVAL] epoch=050 macro_auc=0.9354215462182335 - Looks promising can do further traning to see how far it goes, Here no inter class exclusion.
+{
+  "best_epoch": 50,
+  "best_macro_auc": 0.9354215462182335,
+  "per_digit_best_auc": {
+    "0": 0.9815556793525405,
+    "1": 0.9981697063489446,
+    "2": 0.8664250322029239,
+    "3": 0.9015973222313142,
+    "4": 0.932083307050911,
+    "5": 0.9062238247535948,
+    "6": 0.9614847805399341,
+    "7": 0.9434613991874351,
+    "8": 0.9217321656810592,
+    "9": 0.9414822448336779
+  },
+  "curvature": 1.0,
+  "objective": "soft-boundary",
+  "lambda_excl": 0.0,
+  "margin_excl": 0.1,
+  "lambda_overlap": 0.01,
+  "margin_overlap": 0.05
+}
+
+(lsAirsim) D:\Doctorate\EngineCheck\oasplTurbojet>python "D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\samplesvdd\hySpCheck\train_hyp_mnist_multi.py" --mnist_processed_dir "D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\CVAEChecked\Data\MNIST_processed" --xp_path "D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\samplesvdd\hySpCheck\runs\ablate_mnist_no_ov" --device cuda --digits all --skip_ae_pretrain --ae_stage1_checkpoint_path "D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\samplesvdd\hySpCheck\runs\ae_pretrain_mnist\ae_stage1.pth" --ae_n_epochs 100 --svdd_n_epochs 50 --lambda_excl 0.01 --lambda_overlap 0
+[AE] skipped pretrain; loaded stage-1 checkpoint: D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\samplesvdd\hySpCheck\runs\ae_pretrain_mnist\ae_stage1.pth
+[SVDD-H] 001/50 loss=1.814654 rec=1.748187 svdd=1329.340670 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 002/50 loss=1.805677 rec=1.746537 svdd=1182.806485 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 003/50 loss=1.799149 rec=1.745659 svdd=1069.801739 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 004/50 loss=1.793277 rec=1.744372 svdd=978.100244 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 005/50 loss=1.788443 rec=1.743100 svdd=906.856642 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[EVAL] epoch=005 macro_auc=0.8687387502698259
+[SVDD-H] 006/50 loss=1.786535 rec=1.743821 svdd=854.284764 excl=0.000000 overlap=0.000000 R_mean=9.8962
+[SVDD-H] 007/50 loss=1.755902 rec=1.747348 svdd=133.176736 excl=0.189568 overlap=12.913598 R_mean=10.3860
+[SVDD-H] 008/50 loss=1.748906 rec=1.741590 svdd=130.798001 excl=0.077547 overlap=13.893059 R_mean=10.6758
+[SVDD-H] 009/50 loss=1.748047 rec=1.740892 svdd=132.249326 excl=0.054278 overlap=14.472681 R_mean=10.8886
+[SVDD-H] 010/50 loss=1.747243 rec=1.740055 svdd=134.840206 excl=0.044594 overlap=14.898346 R_mean=11.0648
+[EVAL] epoch=010 macro_auc=0.9504527871966795
+[SVDD-H] 011/50 loss=1.748030 rec=1.740751 svdd=137.600039 excl=0.039867 overlap=15.250853 R_mean=11.2192
+[SVDD-H] 012/50 loss=1.747101 rec=1.739686 svdd=140.659614 excl=0.038201 overlap=15.559480 R_mean=11.3611
+[SVDD-H] 013/50 loss=1.748025 rec=1.740455 svdd=143.742185 excl=0.038272 overlap=15.843450 R_mean=11.4944
+[SVDD-H] 014/50 loss=1.746098 rec=1.738363 svdd=146.947758 excl=0.038790 overlap=16.110012 R_mean=11.6236
+[SVDD-H] 015/50 loss=1.746363 rec=1.738454 svdd=150.078006 excl=0.040420 overlap=16.368454 R_mean=11.7479
+[EVAL] epoch=015 macro_auc=0.9598815841706138
+[SVDD-H] 016/50 loss=1.746497 rec=1.738403 svdd=153.307886 excl=0.042850 overlap=16.616907 R_mean=11.8696
+[SVDD-H] 017/50 loss=1.744761 rec=1.736487 svdd=156.481669 excl=0.044997 overlap=16.860355 R_mean=11.9883
+[SVDD-H] 018/50 loss=1.746160 rec=1.737691 svdd=159.746083 excl=0.048185 overlap=17.097786 R_mean=12.1056
+[SVDD-H] 019/50 loss=1.745923 rec=1.737264 svdd=162.945660 excl=0.051117 overlap=17.332409 R_mean=12.2203
+[SVDD-H] 020/50 loss=1.747924 rec=1.739065 svdd=166.220862 excl=0.054771 overlap=17.561831 R_mean=12.3340
+[EVAL] epoch=020 macro_auc=0.9518693010070809
+[SVDD-H] 021/50 loss=1.744410 rec=1.735345 svdd=169.403063 excl=0.059503 overlap=17.789236 R_mean=12.4466
+[SVDD-H] 022/50 loss=1.747476 rec=1.738191 svdd=172.688370 excl=0.065036 overlap=18.014366 R_mean=12.5580
+[SVDD-H] 023/50 loss=1.746477 rec=1.736971 svdd=176.039465 excl=0.070411 overlap=18.237206 R_mean=12.6694
+[SVDD-H] 024/50 loss=1.742985 rec=1.733259 svdd=179.191975 excl=0.076669 overlap=18.459860 R_mean=12.7799
+[SVDD-H] 025/50 loss=1.743619 rec=1.733657 svdd=182.507450 excl=0.083691 overlap=18.680914 R_mean=12.8891
+[EVAL] epoch=025 macro_auc=0.9110826458046603
+[SVDD-H] 026/50 loss=1.743476 rec=1.733261 svdd=185.877131 excl=0.092182 overlap=18.899385 R_mean=12.9997
+[SVDD-H] 027/50 loss=1.742362 rec=1.731863 svdd=189.249252 excl=0.103609 overlap=19.120617 R_mean=13.1088
+[SVDD-H] 028/50 loss=1.744805 rec=1.734008 svdd=192.519183 excl=0.117144 overlap=19.338757 R_mean=13.2191
+[SVDD-H] 029/50 loss=1.745364 rec=1.734220 svdd=195.948877 excl=0.134605 overlap=19.559448 R_mean=13.3296
+[SVDD-H] 030/50 loss=1.743840 rec=1.732326 svdd=199.186225 excl=0.155488 overlap=19.780376 R_mean=13.4412
+[EVAL] epoch=030 macro_auc=0.8441959353222688
+[SVDD-H] 031/50 loss=1.741539 rec=1.729617 svdd=202.462637 excl=0.179905 overlap=20.003471 R_mean=13.5527
+[SVDD-H] 032/50 loss=1.744437 rec=1.732059 svdd=205.610423 excl=0.209722 overlap=20.226597 R_mean=13.6648
+[SVDD-H] 033/50 loss=1.745458 rec=1.732552 svdd=208.709025 excl=0.247088 overlap=20.450695 R_mean=13.7754
+[SVDD-H] 034/50 loss=1.742898 rec=1.729374 svdd=211.587945 excl=0.294445 overlap=20.671953 R_mean=13.8848
+[SVDD-H] 035/50 loss=1.744011 rec=1.729723 svdd=214.242714 excl=0.357533 overlap=20.890682 R_mean=13.9914
+[EVAL] epoch=035 macro_auc=0.7678729377836994
+[SVDD-H] 036/50 loss=1.744817 rec=1.729415 svdd=216.238549 excl=0.459032 overlap=21.103962 R_mean=14.0937
+[SVDD-H] 037/50 loss=1.745905 rec=1.728248 svdd=216.866039 excl=0.681411 overlap=21.308533 R_mean=14.1826
+[SVDD-H] 038/50 loss=1.749463 rec=1.729164 svdd=216.818427 excl=0.945806 overlap=21.486290 R_mean=14.2555
+[SVDD-H] 039/50 loss=1.751541 rec=1.728165 svdd=215.945334 excl=1.257888 overlap=21.632092 R_mean=14.3119
+[SVDD-H] 040/50 loss=1.753468 rec=1.727934 svdd=215.705635 excl=1.474880 overlap=21.744968 R_mean=14.3582
+[EVAL] epoch=040 macro_auc=0.6246299574305707
+[SVDD-H] 041/50 loss=1.754075 rec=1.727617 svdd=216.684816 excl=1.562413 overlap=21.837526 R_mean=14.4014
+[SVDD-H] 042/50 loss=1.752828 rec=1.725983 svdd=217.937331 excl=1.594874 overlap=21.924015 R_mean=14.4441
+[SVDD-H] 043/50 loss=1.754438 rec=1.727367 svdd=219.367212 excl=1.610333 overlap=22.009289 R_mean=14.4865
+[SVDD-H] 044/50 loss=1.752133 rec=1.724790 svdd=220.616386 excl=1.631236 overlap=22.094198 R_mean=14.5285
+[SVDD-H] 045/50 loss=1.755129 rec=1.727446 svdd=221.728313 excl=1.659656 overlap=22.178247 R_mean=14.5691
+[EVAL] epoch=045 macro_auc=0.6185127734407349
+[SVDD-H] 046/50 loss=1.755054 rec=1.726884 svdd=222.530949 excl=1.704383 overlap=22.259268 R_mean=14.6079
+[SVDD-H] 047/50 loss=1.753479 rec=1.724720 svdd=223.524546 excl=1.758268 overlap=22.336863 R_mean=14.6433
+[SVDD-H] 048/50 loss=1.754433 rec=1.725073 svdd=224.172199 excl=1.815152 overlap=22.407818 R_mean=14.6765
+[SVDD-H] 049/50 loss=1.753494 rec=1.723746 svdd=225.091093 excl=1.849409 overlap=22.474127 R_mean=14.7086
+[SVDD-H] 050/50 loss=1.753042 rec=1.723059 svdd=226.140853 excl=1.867600 overlap=22.538452 R_mean=14.7410
+[EVAL] epoch=050 macro_auc=0.6305855058410401 - The term Interclass exclusion needs attention
+{
+  "best_epoch": 15,
+  "best_macro_auc": 0.9598815841706138,
+  "per_digit_best_auc": {
+    "0": 0.9826009064342637,
+    "1": 0.9970203619951129,
+    "2": 0.9299587765546161,
+    "3": 0.9649857338162189,
+    "4": 0.9473462524008421,
+    "5": 0.9171724221982513,
+    "6": 0.9943495298151719,
+    "7": 0.9805298782744337,
+    "8": 0.9285153612993816,
+    "9": 0.9563366189178456
+  },
+  "curvature": 1.0,
+  "objective": "soft-boundary",
+  "lambda_excl": 0.01,
+  "margin_excl": 0.1,
+  "lambda_overlap": 0.0,
+  "margin_overlap": 0.05
+}
+(lsAirsim) D:\Doctorate\EngineCheck\oasplTurbojet>python "D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\samplesvdd\hySpCheck\train_hyp_mnist_multi.py" --mnist_processed_dir "D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\CVAEChecked\Data\MNIST_processed" --xp_path "D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\samplesvdd\hySpCheck\runs\ablate_mnist_full_t2" --device cuda --digits all --skip_ae_pretrain --ae_stage1_checkpoint_path "D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\samplesvdd\hySpCheck\runs\ae_pretrain_mnist\ae_stage1.pth" --ae_n_epochs 100 --svdd_n_epochs 50 --lambda_excl 0.0001 --lambda_overlap 0.02
+[AE] skipped pretrain; loaded stage-1 checkpoint: D:\Doctorate\EngineCheck\oasplTurbojet\SampleSvDD\samplesvdd\hySpCheck\runs\ae_pretrain_mnist\ae_stage1.pth
+[SVDD-H] 001/50 loss=1.814861 rec=1.748399 svdd=1329.240179 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 002/50 loss=1.806484 rec=1.747330 svdd=1183.064284 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 003/50 loss=1.801024 rec=1.747512 svdd=1070.233090 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 004/50 loss=1.793394 rec=1.744467 svdd=978.538648 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 005/50 loss=1.790374 rec=1.745022 svdd=907.049449 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[EVAL] epoch=005 macro_auc=0.8681875199379956
+[SVDD-H] 006/50 loss=1.786699 rec=1.743979 svdd=854.401406 excl=0.000000 overlap=0.000000 R_mean=9.9005
+[EVAL] epoch=005 macro_auc=0.8681875199379956
+[EVAL] epoch=005 macro_auc=0.8681875199379956
+[SVDD-H] 006/50 loss=1.786699 rec=1.743979 svdd=854.401406 excl=0.000000 overlap=0.000000 R_mean=9.9005
+[SVDD-H] 007/50 loss=2.008157 rec=1.744330 svdd=101.769014 excl=2.958562 overlap=12.922147 R_mean=9.7664
+[EVAL] epoch=005 macro_auc=0.8681875199379956
+[SVDD-H] 006/50 loss=1.786699 rec=1.743979 svdd=854.401406 excl=0.000000 overlap=0.000000 R_mean=9.9005
+[EVAL] epoch=005 macro_auc=0.8681875199379956
+[SVDD-H] 006/50 loss=1.786699 rec=1.743979 svdd=854.401406 excl=0.000000 overlap=0.000000 R_mean=9.9005
+[EVAL] epoch=005 macro_auc=0.8681875199379956
+[EVAL] epoch=005 macro_auc=0.8681875199379956
+[SVDD-H] 006/50 loss=1.786699 rec=1.743979 svdd=854.401406 excl=0.000000 overlap=0.000000 R_mean=9.9005
+[SVDD-H] 007/50 loss=2.008157 rec=1.744330 svdd=101.769014 excl=2.958562 overlap=12.922147 R_mean=9.7664
+2 excl=1.377285 overlap=12.670117 R_mean=9.7617
+[SVDD-H] 010/50 loss=1.996772 rec=1.738787 svdd=99.398728 excl=1.244096 overlap=12.644534 R_mean=9.7481
+[EVAL] epoch=010 macro_auc=0.9241250644155115
+[SVDD-H] 011/50 loss=1.999491 rec=1.742093 svdd=98.785346 excl=1.148928 overlap=12.617216 R_mean=9.7267
+[SVDD-H] 012/50 loss=1.999052 rec=1.742547 svdd=98.121650 excl=1.071590 overlap=12.574580 R_mean=9.7024
+[SVDD-H] 013/50 loss=1.994851 rec=1.739362 svdd=97.390949 excl=1.013046 overlap=12.525875 R_mean=9.6734
+[SVDD-H] 014/50 loss=1.992773 rec=1.738488 svdd=96.621577 excl=0.949755 overlap=12.467965 R_mean=9.6416
+[SVDD-H] 015/50 loss=1.991357 rec=1.738391 svdd=95.808149 excl=0.885729 overlap=12.404311 R_mean=9.6075
+[EVAL] epoch=015 macro_auc=0.9428854317931226
+[SVDD-H] 016/50 loss=1.989144 rec=1.737588 svdd=94.990112 excl=0.837353 overlap=12.336135 R_mean=9.5727
+[SVDD-H] 017/50 loss=1.986442 rec=1.736326 svdd=94.119474 excl=0.782973 overlap=12.266594 R_mean=9.5350
+[SVDD-H] 018/50 loss=1.987324 rec=1.738766 svdd=93.258960 excl=0.738156 overlap=12.191051 R_mean=9.4969
+[SVDD-H] 019/50 loss=1.982573 rec=1.735585 svdd=92.375504 excl=0.694883 overlap=12.114980 R_mean=9.4577
+[SVDD-H] 020/50 loss=1.982361 rec=1.736986 svdd=91.570663 excl=0.651204 overlap=12.036565 R_mean=9.4199
+[EVAL] epoch=020 macro_auc=0.958543589091389
+[SVDD-H] 021/50 loss=1.981911 rec=1.738097 svdd=90.650028 excl=0.621035 overlap=11.960946 R_mean=9.3797
+[SVDD-H] 022/50 loss=1.975923 rec=1.733766 svdd=89.768998 excl=0.580423 overlap=11.880490 R_mean=9.3410
+[SVDD-H] 023/50 loss=1.977136 rec=1.736573 svdd=88.942246 excl=0.545258 overlap=11.803078 R_mean=9.3024
+[SVDD-H] 024/50 loss=1.973418 rec=1.734444 svdd=88.100972 excl=0.511489 overlap=11.725868 R_mean=9.2651
+[SVDD-H] 025/50 loss=1.969522 rec=1.732080 svdd=87.372965 excl=0.478145 overlap=11.651286 R_mean=9.2281
+[EVAL] epoch=025 macro_auc=0.96789790470265
+[SVDD-H] 026/50 loss=1.967666 rec=1.731745 svdd=86.567778 excl=0.455157 overlap=11.577341 R_mean=9.1924
+[SVDD-H] 027/50 loss=1.967605 rec=1.733152 svdd=85.825542 excl=0.426895 overlap=11.505981 R_mean=9.1587
+[SVDD-H] 028/50 loss=1.964984 rec=1.731916 svdd=85.149995 excl=0.406341 overlap=11.438515 R_mean=9.1249
+[SVDD-H] 029/50 loss=1.963812 rec=1.732132 svdd=84.469320 excl=0.381752 overlap=11.370872 R_mean=9.0946
+[SVDD-H] 030/50 loss=1.962950 rec=1.732514 svdd=83.855612 excl=0.361147 overlap=11.310351 R_mean=9.0634
+[EVAL] epoch=030 macro_auc=0.9766200795904743
+[SVDD-H] 031/50 loss=1.960321 rec=1.731165 svdd=83.258087 excl=0.345805 overlap=11.247924 R_mean=9.0355
+[SVDD-H] 032/50 loss=1.958277 rec=1.730269 svdd=82.650220 excl=0.332230 overlap=11.192095 R_mean=9.0074
+[SVDD-H] 033/50 loss=1.958514 rec=1.731660 svdd=82.102340 excl=0.311772 overlap=11.135882 R_mean=8.9815
+[SVDD-H] 034/50 loss=1.953879 rec=1.728087 svdd=81.596283 excl=0.300182 overlap=11.084132 R_mean=8.9566
+[SVDD-H] 035/50 loss=1.953812 rec=1.729043 svdd=81.102793 excl=0.292938 overlap=11.034223 R_mean=8.9325
+[EVAL] epoch=035 macro_auc=0.9811686617572388
+[SVDD-H] 036/50 loss=1.953028 rec=1.729246 svdd=80.614946 excl=0.283268 overlap=10.986170 R_mean=8.9097
+[SVDD-H] 037/50 loss=1.953275 rec=1.730428 svdd=80.177450 excl=0.267938 overlap=10.940548 R_mean=8.8874
+[SVDD-H] 038/50 loss=1.951179 rec=1.729249 svdd=79.734262 excl=0.260562 overlap=10.895886 R_mean=8.8656
+[SVDD-H] 039/50 loss=1.953237 rec=1.732198 svdd=79.337383 excl=0.252890 overlap=10.852352 R_mean=8.8461
+[SVDD-H] 040/50 loss=1.950434 rec=1.730195 svdd=78.953115 excl=0.249974 overlap=10.813323 R_mean=8.8265
+[EVAL] epoch=040 macro_auc=0.9855879121500587
+[SVDD-H] 041/50 loss=1.949073 rec=1.729638 svdd=78.566705 excl=0.244180 overlap=10.774119 R_mean=8.8077
+[SVDD-H] 042/50 loss=1.945437 rec=1.726772 svdd=78.202406 excl=0.234529 overlap=10.736568 R_mean=8.7904
+[SVDD-H] 043/50 loss=1.944209 rec=1.726254 svdd=77.874217 excl=0.231184 overlap=10.701905 R_mean=8.7728
+[SVDD-H] 044/50 loss=1.943203 rec=1.725969 svdd=77.532510 excl=0.230007 overlap=10.666718 R_mean=8.7567
+[SVDD-H] 045/50 loss=1.941497 rec=1.724925 svdd=77.235534 excl=0.221510 overlap=10.634424 R_mean=8.7406
+[EVAL] epoch=045 macro_auc=0.9876778059217495
+[SVDD-H] 046/50 loss=1.940088 rec=1.724174 svdd=76.917427 excl=0.219240 overlap=10.602283 R_mean=8.7259
+[SVDD-H] 047/50 loss=1.942090 rec=1.726776 svdd=76.648090 excl=0.217239 overlap=10.572989 R_mean=8.7110
+[SVDD-H] 048/50 loss=1.938392 rec=1.723691 svdd=76.369653 excl=0.215672 overlap=10.543047 R_mean=8.6962
+[SVDD-H] 049/50 loss=1.938786 rec=1.724691 svdd=76.120349 excl=0.212647 overlap=10.513407 R_mean=8.6820
+[SVDD-H] 050/50 loss=1.938362 rec=1.724848 svdd=75.830294 excl=0.210459 overlap=10.485057 R_mean=8.6688
+[EVAL] epoch=050 macro_auc=0.9900187868859585 best so far
+{
+  "best_epoch": 50,
+  "best_macro_auc": 0.9900187868859585,
+  "per_digit_best_auc": {
+    "0": 0.9942443226752766,
+    "1": 0.9990345179235511,
+    "2": 0.985532888148148,
+    "3": 0.9836028737981147,
+    "4": 0.9943176546114908,
+    "5": 0.9819444926751278,
+    "6": 0.9970734609975116,
+    "7": 0.99278613201328,
+    "8": 0.9872892364017679,
+    "9": 0.984362289615316
+  },
+  "curvature": 1.0,
+  "objective": "soft-boundary",
+  "lambda_excl": 0.0001,
+  "margin_excl": 0.1,
+  "lambda_overlap": 0.02,
+  "margin_overlap": 0.05
+}
+

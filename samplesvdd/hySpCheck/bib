@@ -1,0 +1,46 @@
+@inproceedings{ruff2018deep,
+title={Deep one-class classification},
+author={Ruff, Lukas and Vandermeulen, Robert and Goernitz, Nico and Deecke, 
+7
+Lukas and Siddiqui, Shafaq and Binder, Alex and M{\"u}ller, Emmanuel and Kloft, 
+Michael},
+booktitle={ICML},
+pages={4393--4402},
+year={2018}
+}
+@article{nickel2017poincare,
+title={Poincar{\'e} embeddings for learning hierarchical representations},
+author={Nickel, Maximilian and Kiela, Douwe},
+journal={Advances in neural information processing systems},
+volume={30},
+year={2017}
+}
+@inproceedings{li2024hyperbolic,
+title={Hyperbolic anomaly detection (HypAD)},
+author={Li, Qiang and Doe, Jane}, %
+Placeholder
+booktitle={CVPR},
+pages={123--130},
+year={2024}
+}
+@inproceedings{ghafoori2020dsmvdd,
+title={Deep Multi-Sphere SVDD: High performance multi-class anomaly 
+detection},
+author={Ghafoori, Zahra and Kloft, Michael},
+booktitle={SDM},
+year={2020}
+}
+@inproceedings{cevikalp2023open,
+title={Deep uniformly distributed centers on a hypersphere for open set 
+recognition},
+author={Cevikalp, Hakan and Yavuz, Hasan Serhan and Saribas, Hasan},
+booktitle={ACML},
+pages={1--10},
+year={2023}
+}
+@misc{HySpCheck2026,
+title={Coupled Hyperbolic Multi-Sphere Deep SVDD (HySpCheck)},
+author={CJ},
+year={2026},
+note={User-supplied manuscript (draft)}
+}

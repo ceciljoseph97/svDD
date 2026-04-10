@@ -1,0 +1,16 @@
+{
+  "macro_svdd_auc": 0.9346765418784212,
+  "per_digit_svdd_auc": {
+    "0": 0.9852372940357391,
+    "1": 0.9984705244279248,
+    "2": 0.8637932300022781,
+    "3": 0.899496636769114,
+    "4": 0.9228507492090134,
+    "5": 0.8972046465571685,
+    "6": 0.9767483169833984,
+    "7": 0.9542494916495228,
+    "8": 0.9207652634137121,
+    "9": 0.9279492657363406
+  },
+  "csv": "D:\\Doctorate\\EngineCheck\\oasplTurbojet\\SampleSvDD\\samplesvdd\\hySpCheck\\runs\\ablate_mnist_full\\eval_hyperbolic\\global_top_anomalies.csv"
+}
