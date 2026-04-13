@@ -1,11 +1,13 @@
 """
-Unsupervised hyperbolic multi-sphere SVDD on MNIST with silhouette-driven training.
+Hyperbolic multi-sphere SVDD on MNIST — aligned with hySpCheck/train_hyp_mnist_multi.py.
 
-- Optional preprocessing: per-digit minmax (label leak for scaling) vs label-free GCN only.
-- Optional center init: labeled (digit-conditioned), unsup head means, KMeans on rep, random ball.
-- Main training signal: differentiable silhouette surrogate on encoder `rep` with soft hyperbolic
-  assignments (intra scatter minus weighted inter-mean separation). True sklearn silhouette logged.
-- Optional sphere overlap penalty, optional cluster pruning (same maintenance as hySpCheckunSup).
+- Loss: recon + lambda_svdd * SVDD(true digit head) + lambda_excl * inter-class exclusion
+  + lambda_overlap * sphere overlap (same geometry as hySpCheck).
+- Radii: per-digit dist_sq quantiles via update_radii (soft-boundary, post warm-up), optional cluster pruning.
+- Eval: **test split only** for AUC / clustering / outline / densities (train is for learning + radius aux).
+- Outline sample: soft-boundary scores s_k = dist_sq_k - R_k^2; **outline** iff min_k s_k > 0 (outside every sphere).
+- Reports **cluster x class** counts and conditional densities P(class | assigned cluster).
+- Optional: soft-assignment aux (sep/entropy), silhouette surrogate — see --lambda_sil, --lambda_sep.
 """
 from __future__ import annotations
 
@@ -17,6 +19,7 @@ import sys
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 import torch.optim as optim
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
@@ -35,7 +38,15 @@ from mnist_local import (
     preprocess_batch_by_digit_minmax,
     recon_mse_loss,
 )
-from hyperbolic_multi_sphere import HyperbolicMultiSphereSVDD, dist_sq_to_all_centers, init_centers_h
+from hyperbolic_multi_sphere import (
+    HyperbolicMultiSphereSVDD,
+    dist_sq_to_all_centers,
+    hyp_dist_sq_to_centers,
+    init_centers_h,
+    svdd_loss_one_class,
+    svdd_loss_soft_boundary,
+    update_radii,
+)
 from hyperbolic_ops import hyp_distance, proj_ball
 
 try:
@@ -185,7 +196,7 @@ def sort_clusters_flagged(c_h, R, all_dist, all_z_sel, assign, args, curvature: 
 
     n = int(all_dist.size(0))
     counts = torch.bincount(assign, minlength=K)
-    min_count = max(1, int(args.prune_min_frac * n))
+    min_count = max(int(args.k_min), int(args.prune_min_frac * n), 1)
     max_count = max(min_count + 1, int(args.prune_max_frac * n))
     under = [int(k) for k in range(K) if int(counts[k].item()) < min_count]
     over = [int(k) for k in range(K) if int(counts[k].item()) > max_count]
@@ -242,6 +253,16 @@ def sphere_overlap_penalty(c_h, R, curvature: float, margin: float) -> torch.Ten
             d_ab = hyp_distance(c_h[a : a + 1], c_h[b : b + 1], c=curvature).squeeze(0)
             penalties.append(torch.relu((R[a] + R[b] + float(margin)) - d_ab))
     return torch.mean(torch.stack(penalties)) if penalties else torch.tensor(0.0, device=c_h.device)
+
+
+def inter_class_exclusion_loss(dist_sq_all: torch.Tensor, R: torch.Tensor, y: torch.Tensor, margin: float) -> torch.Tensor:
+    """hySpCheck: push non-true-class points outside other spheres: dist_sq >= (R_k+margin)^2 for k != y."""
+    B, K = dist_sq_all.shape
+    target = (R.unsqueeze(0) + float(margin)) ** 2
+    viol = torch.relu(target - dist_sq_all)
+    true_mask = F.one_hot(y, num_classes=K).bool()
+    viol = viol.masked_fill(true_mask, 0.0)
+    return torch.mean(viol)
 
 
 @torch.no_grad()
@@ -305,7 +326,34 @@ def evaluate(model, c_h, R, loader, device, objective, curvature):
         "nmi": None if np.isnan(nmi) else nmi,
         "ari": None if np.isnan(ari) else ari,
     }
-    return macro, per_digit, unsup, dist_np, pred_cluster
+    # Outline: outside every hypersphere (soft-boundary scores all positive).
+    if objective == "soft-boundary":
+        outline_mask = np.min(scores_np, axis=1) > 0
+        outline_frac = float(np.mean(outline_mask.astype(np.float64)))
+    else:
+        outline_frac = float("nan")
+        outline_mask = None
+
+    Kc, Cn = scores_np.shape[1], int(digits_np.max()) + 1 if digits_np.size else 0
+    counts_kc = np.zeros((Kc, Cn), dtype=np.int64)
+    for i in range(digits_np.shape[0]):
+        counts_kc[pred_cluster[i], int(digits_np[i])] += 1
+    row_sum = np.maximum(counts_kc.sum(axis=1, keepdims=True), 1)
+    density_kc = counts_kc.astype(np.float64) / row_sum
+    cluster_class_density = {
+        str(k): {str(c): float(density_kc[k, c]) for c in range(Cn)} for k in range(Kc)
+    }
+    cluster_class_counts = {str(k): {str(c): int(counts_kc[k, c]) for c in range(Cn)} for k in range(Kc)}
+
+    extras = {
+        "outline_frac": outline_frac,
+        "outline_n": int(outline_mask.sum()) if outline_mask is not None else None,
+        "test_n": int(digits_np.shape[0]),
+        "cluster_class_density": cluster_class_density,
+        "cluster_class_counts": cluster_class_counts,
+        "cluster_sizes": [int(counts_kc[k].sum()) for k in range(Kc)],
+    }
+    return macro, per_digit, unsup, dist_np, pred_cluster, extras
 
 
 @torch.no_grad()
@@ -413,7 +461,7 @@ def plot_poincare(z_tensor, c_h, R, out_path=None, assign=None):
 
 
 def main():
-    p = argparse.ArgumentParser("MNIST unsupervised hyperbolic SVDD — silhouette primary + optional overlap/pruning")
+    p = argparse.ArgumentParser("MNIST hyperbolic multi-sphere SVDD (hySpCheck-style + test metrics / outline / densities)")
     p.add_argument("--mnist_processed_dir", type=str, required=True)
     p.add_argument("--xp_path", type=str, default="hySpunsupMnist/runs/mnist_unsup_sil")
     p.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
@@ -441,24 +489,31 @@ def main():
     p.add_argument(
         "--center_init",
         type=str,
-        default="unsup_head_means",
+        default="labeled",
         choices=["labeled", "unsup_head_means", "kmeans_rep", "random"],
-        help="Hyperbolic center initialization (labeled uses digit-conditioned z).",
+        help="Hyperbolic center init (hySpCheck default: labeled).",
     )
     p.add_argument("--objective", type=str, default="soft-boundary", choices=["one-class", "soft-boundary"])
     p.add_argument("--nu", type=float, default=0.1)
-    p.add_argument("--lambda_rec", type=float, default=0.5, help="Reconstruction weight (silhouette surrogate is primary).")
+    p.add_argument(
+        "--lambda_rec",
+        type=float,
+        default=1.0,
+        help="Weight on reconstruction (hySpCheck uses implicit 1.0).",
+    )
     p.add_argument("--lambda_svdd", type=float, default=5e-5)
-    p.add_argument("--lambda_sep", type=float, default=0.05)
+    p.add_argument("--lambda_excl", type=float, default=1e-2, help="Inter-class exclusion (hySpCheck).")
+    p.add_argument("--margin_excl", type=float, default=0.1, help="Exclusion margin outside non-true spheres.")
+    p.add_argument("--lambda_sep", type=float, default=0.0, help="Optional separation on soft assignments (0=off).")
     p.add_argument("--sep_margin", type=float, default=0.1)
     p.add_argument("--lambda_overlap", type=float, default=1e-2)
     p.add_argument("--margin_overlap", type=float, default=0.05)
-    p.add_argument("--lambda_entropy", type=float, default=0.01)
+    p.add_argument("--lambda_entropy", type=float, default=0.0, help="Optional entropy regularizer on soft p (0=off).")
     p.add_argument(
         "--lambda_sil",
         type=float,
-        default=1.0,
-        help="Weight for differentiable silhouette surrogate (intra - inter on rep, soft assign).",
+        default=0.0,
+        help="Optional silhouette surrogate on rep with soft assign (0=hySpCheck-only).",
     )
     p.add_argument(
         "--lambda_sil_inter",
@@ -467,11 +522,9 @@ def main():
         help="Multiplier for inter-mean separation term inside surrogate (loss = intra - lambda_sil_inter * inter).",
     )
     p.add_argument("--warm_up_n_epochs", type=int, default=5)
-    p.add_argument("--radius_ema", type=float, default=0.9)
-    p.add_argument("--radius_max_step", type=float, default=0.05)
     p.add_argument("--eval_every", type=int, default=5)
     p.add_argument("--temperature", type=float, default=0.1)
-    p.add_argument("--sil_eval_max_samples", type=int, default=8000, help="Cap samples for sklearn silhouette (train loader).")
+    p.add_argument("--sil_eval_max_samples", type=int, default=8000, help="Cap samples for sklearn silhouette (**test** loader).")
     p.add_argument(
         "--sil_eval_feature",
         type=str,
@@ -482,16 +535,22 @@ def main():
     p.add_argument(
         "--select_metric",
         type=str,
-        default="silhouette",
-        choices=["silhouette", "hungarian", "macro_auc"],
-        help="Checkpoint selection on validation.",
+        default="macro_auc",
+        choices=["silhouette", "hungarian", "macro_auc", "outline_frac"],
+        help="Checkpoint selection on **test** metrics (lower outline_frac can be better if you minimize outliers).",
     )
     p.add_argument("--plot_embeddings", action="store_true")
     p.add_argument("--plot_out", type=str, default=None)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--deterministic", action="store_true")
-    p.add_argument("--enable_pruning", action="store_true", help="Cluster maintenance (tiny/oversized), same as hySpCheckunSup sort.")
+    p.add_argument("--enable_pruning", action="store_true", help="Cluster maintenance (tiny/oversized).")
     p.add_argument("--prune_every", type=int, default=1)
+    p.add_argument(
+        "--k_min",
+        type=int,
+        default=1,
+        help="Minimum assigned samples for a cluster to avoid 'tiny' (merged with max(prune_min_frac*n, k_min)).",
+    )
     p.add_argument("--prune_min_frac", type=float, default=0.02)
     p.add_argument("--prune_max_frac", type=float, default=0.25)
     p.add_argument("--early_stop_patience", type=int, default=0)
@@ -606,6 +665,7 @@ def main():
     best_per_digit = {}
     best_unsup = {}
     best_sil = None
+    best_extras = {}
     best_select_metric = -1e12
     no_improve_epochs = 0
 
@@ -614,45 +674,52 @@ def main():
         losses = []
         rec_losses = []
         svdd_losses = []
+        excl_losses = []
         sep_losses = []
         ov_losses = []
         ent_losses = []
         sil_losses = []
+        dist_sq_by_digit = [[] for _ in range(n_clusters)]
 
-        for x_scaled, _ in tr_loader:
+        for x_scaled, digits_b in tr_loader:
             x_scaled = x_scaled.to(device)
+            digits_b = digits_b.to(device)
             rep, recon = model(x_scaled)
+            z_h = model.project_self_h(rep, digits_b)
+            c_b = c_h[digits_b]
+            dist_sq = hyp_dist_sq_to_centers(z_h, c_b, c=args.curvature)
             z_all_h = model.project_all_h(rep)
             dist_sq_all = dist_sq_to_all_centers(z_all_h, c_h, curvature=args.curvature)
-            logits = -dist_sq_all / args.temperature
-            p_assign = torch.softmax(logits, dim=1)
 
             rec = recon_mse_loss(recon, x_scaled)
             if args.objective == "soft-boundary":
-                R_expand = R.unsqueeze(0)
-                svdd_all = R_expand**2 + (1.0 / args.nu) * torch.relu(dist_sq_all - R_expand**2)
+                R_b = R[digits_b]
+                sv = svdd_loss_soft_boundary(dist_sq, R_b, nu=args.nu)
             else:
-                svdd_all = dist_sq_all
-            svdd = torch.mean(torch.sum(p_assign * svdd_all, dim=1))
-
-            top2 = torch.topk(dist_sq_all, k=2, largest=False)
-            d1 = top2.values[:, 0]
-            d2 = top2.values[:, 1]
-            sep = torch.mean(torch.relu(d1 - d2 + args.sep_margin))
-
+                sv = svdd_loss_one_class(dist_sq)
+            excl = inter_class_exclusion_loss(dist_sq_all, R, digits_b, margin=args.margin_excl)
             ov = sphere_overlap_penalty(c_h, R, curvature=args.curvature, margin=args.margin_overlap)
+
+            logits = -dist_sq_all / max(args.temperature, 1e-8)
+            p_assign = torch.softmax(logits, dim=1)
+            if n_clusters >= 2:
+                top2 = torch.topk(dist_sq_all, k=2, largest=False)
+                d1, d2 = top2.values[:, 0], top2.values[:, 1]
+                sep = torch.mean(torch.relu(d1 - d2 + args.sep_margin))
+            else:
+                sep = torch.tensor(0.0, device=device)
             eps = 1e-8
             entropy = -torch.sum(p_assign * torch.log(p_assign + eps), dim=1)
             entropy_loss = -torch.mean(entropy)
-
             _, intra_s, inter_s = silhouette_surrogate_loss(rep, p_assign)
             sil_core = intra_s - args.lambda_sil_inter * inter_s
 
             loss = (
                 args.lambda_rec * rec
-                + args.lambda_svdd * svdd
-                + args.lambda_sep * sep
+                + args.lambda_svdd * sv
+                + args.lambda_excl * excl
                 + args.lambda_overlap * ov
+                + args.lambda_sep * sep
                 + args.lambda_entropy * entropy_loss
                 + args.lambda_sil * sil_core
             )
@@ -663,66 +730,70 @@ def main():
 
             losses.append(float(loss.item()))
             rec_losses.append(float(rec.item()))
-            svdd_losses.append(float(svdd.item()))
+            svdd_losses.append(float(sv.item()))
+            excl_losses.append(float(excl.item()))
             sep_losses.append(float(sep.item()))
             ov_losses.append(float(ov.item()))
             ent_losses.append(float(entropy_loss.item()))
             sil_losses.append(float(sil_core.item()))
 
+            if args.objective == "soft-boundary" and ep > args.warm_up_n_epochs:
+                for k in range(n_clusters):
+                    m = digits_b == k
+                    if torch.any(m):
+                        dist_sq_by_digit[k].append(dist_sq[m].detach().cpu())
+
         if args.objective == "soft-boundary" and ep > args.warm_up_n_epochs:
-            with torch.no_grad():
-                all_dist = []
-                all_z_sel = []
-                for x_scaled, _ in tr_loader_eval:
-                    x_scaled = x_scaled.to(device)
-                    rep, _ = model(x_scaled)
-                    z_all_h = model.project_all_h(rep)
-                    dist_sq = dist_sq_to_all_centers(z_all_h, c_h, curvature=args.curvature)
-                    assign_b = torch.argmin(dist_sq, dim=1)
-                    z_sel_b = z_all_h[torch.arange(z_all_h.size(0), device=device), assign_b]
-                    all_dist.append(dist_sq.cpu())
-                    all_z_sel.append(z_sel_b.cpu())
-                all_dist = torch.cat(all_dist, dim=0)
-                all_z_sel = torch.cat(all_z_sel, dim=0)
-                assign = torch.argmin(all_dist, dim=1)
-                new_R = torch.zeros_like(R)
-                for k in range(R.numel()):
-                    d_k = all_dist[assign == k, k]
-                    if d_k.numel() > 0:
-                        new_R[k] = torch.quantile(d_k.to(device), 1.0 - args.nu)
-                    else:
-                        new_R[k] = 0.0
-                ema_R = args.radius_ema * R + (1.0 - args.radius_ema) * new_R
-                step = torch.clamp(ema_R - R, min=-args.radius_max_step, max=args.radius_max_step)
-                R = torch.clamp(R + step, min=0.0)
-                if args.enable_pruning and ep % max(1, args.prune_every) == 0:
-                    c_h, R, pinfo = sort_clusters_flagged(c_h, R, all_dist, all_z_sel, assign, args, args.curvature)
+            R = update_radii(dist_sq_by_digit, nu=args.nu, device=device)
+            if args.enable_pruning and ep % max(1, args.prune_every) == 0:
+                with torch.no_grad():
+                    all_dist = []
+                    all_z_sel = []
+                    for x_scaled, _ in tr_loader_eval:
+                        x_scaled = x_scaled.to(device)
+                        rep, _ = model(x_scaled)
+                        z_all_h = model.project_all_h(rep)
+                        dist_sq = dist_sq_to_all_centers(z_all_h, c_h, curvature=args.curvature)
+                        assign_b = torch.argmin(dist_sq, dim=1)
+                        z_sel_b = z_all_h[torch.arange(z_all_h.size(0), device=device), assign_b]
+                        all_dist.append(dist_sq.cpu())
+                        all_z_sel.append(z_sel_b.cpu())
+                    all_dist_t = torch.cat(all_dist, dim=0)
+                    all_z_sel_t = torch.cat(all_z_sel, dim=0)
+                    assign = torch.argmin(all_dist_t, dim=1)
+                    c_h, R, pinfo = sort_clusters_flagged(c_h, R, all_dist_t, all_z_sel_t, assign, args, args.curvature)
                     print(
                         f"[PRUNE] epoch={ep:03d} n={pinfo['n']} under={pinfo['under']} over={pinfo['over']} "
                         f"populated={pinfo['populated']} reseeded={pinfo['reseeded']} merged={pinfo['merged']}"
                     )
 
         print(
-            f"[UNSUP-SIL] {ep:03d}/{args.svdd_n_epochs} loss={np.mean(losses):.6f} rec={np.mean(rec_losses):.6f} "
-            f"svdd={np.mean(svdd_losses):.6f} sep={np.mean(sep_losses):.6f} ov={np.mean(ov_losses):.6f} "
-            f"ent={np.mean(ent_losses):.6f} sil_core={np.mean(sil_losses):.6f}"
+            f"[SVDD-H] {ep:03d}/{args.svdd_n_epochs} loss={np.mean(losses):.6f} rec={np.mean(rec_losses):.6f} "
+            f"svdd={np.mean(svdd_losses):.6f} excl={np.mean(excl_losses):.6f} ov={np.mean(ov_losses):.6f} "
+            f"sep={np.mean(sep_losses):.6f} ent={np.mean(ent_losses):.6f} sil={np.mean(sil_losses):.6f} "
+            f"R_mean={float(R.mean().item()):.4f}"
         )
 
         if ep % args.eval_every == 0 or ep == args.svdd_n_epochs:
-            macro, per_digit, unsup, _, _ = evaluate(model, c_h, R, te_loader, device, args.objective, args.curvature)
-            sil_tr = silhouette_sklearn_on_loader(
-                model, c_h, tr_loader_eval, device, args.curvature, args.sil_eval_max_samples, args.sil_eval_feature
+            macro, per_digit, unsup, _, _, extras = evaluate(
+                model, c_h, R, te_loader, device, args.objective, args.curvature
             )
-            sil_str = f"{sil_tr:.4f}" if sil_tr is not None else "nan"
+            sil_te = silhouette_sklearn_on_loader(
+                model, c_h, te_loader, device, args.curvature, args.sil_eval_max_samples, args.sil_eval_feature
+            )
+            sil_str = f"{sil_te:.4f}" if sil_te is not None else "nan"
+            of = extras.get("outline_frac", float("nan"))
             print(
-                f"[EVAL] epoch={ep:03d} macro_auc={macro} sklearn_sil_train≈{sil_str} "
+                f"[EVAL test] epoch={ep:03d} macro_auc={macro} outline_frac={of:.4f} sklearn_sil_test~={sil_str} "
                 f"h_acc={unsup['hungarian_acc']} nmi={unsup['nmi']} ari={unsup['ari']}"
             )
 
             if args.select_metric == "silhouette":
-                metric = float(sil_tr) if sil_tr is not None else -1e12
+                metric = float(sil_te) if sil_te is not None else -1e12
             elif args.select_metric == "hungarian":
                 metric = float(unsup["hungarian_acc"]) if unsup["hungarian_acc"] is not None else -1e12
+            elif args.select_metric == "outline_frac":
+                metric = -float(of) if not np.isnan(of) else -1e12
             else:
                 metric = float(macro) if not np.isnan(macro) else -1e12
 
@@ -733,7 +804,8 @@ def main():
                 best_epoch = ep
                 best_per_digit = per_digit
                 best_unsup = unsup
-                best_sil = sil_tr
+                best_sil = sil_te
+                best_extras = extras
                 no_improve_epochs = 0
                 torch.save(
                     {
@@ -743,15 +815,21 @@ def main():
                         "rep_dim": args.rep_dim,
                         "z_dim": args.z_dim,
                         "curvature": args.curvature,
+                        "objective": args.objective,
                         "center_init": args.center_init,
                         "preprocess": args.preprocess,
+                        "lambda_excl": args.lambda_excl,
+                        "margin_excl": args.margin_excl,
+                        "lambda_overlap": args.lambda_overlap,
+                        "margin_overlap": args.margin_overlap,
                         "lambda_sil": args.lambda_sil,
                         "lambda_sil_inter": args.lambda_sil_inter,
-                        "lambda_overlap": args.lambda_overlap,
-                        "eval_sklearn_silhouette_train": sil_tr,
+                        "eval_sklearn_silhouette_test": sil_te,
+                        "eval_outline_frac": extras.get("outline_frac"),
                         "eval_hungarian_acc": unsup["hungarian_acc"],
                         "eval_nmi": unsup["nmi"],
                         "eval_ari": unsup["ari"],
+                        "test_cluster_class_density": extras.get("cluster_class_density"),
                     },
                     os.path.join(args.xp_path, "checkpoint_best.pth"),
                 )
@@ -768,12 +846,17 @@ def main():
                 "R": R.detach().cpu(),
                 "rep_dim": args.rep_dim,
                 "z_dim": args.z_dim,
+                "objective": args.objective,
+                "lambda_excl": args.lambda_excl,
+                "margin_excl": args.margin_excl,
+                "lambda_overlap": args.lambda_overlap,
+                "margin_overlap": args.margin_overlap,
             },
             os.path.join(args.xp_path, "checkpoint_latest.pth"),
         )
 
     if args.plot_embeddings:
-        z_emb, assign = collect_embeddings(model, tr_loader_eval, c_h, device, args.curvature)
+        z_emb, assign = collect_embeddings(model, te_loader, c_h, device, args.curvature)
         plot_out = args.plot_out or os.path.join(args.xp_path, "poincare_clusters.png")
         plot_poincare(z_emb, c_h, R, out_path=plot_out, assign=assign)
         print(f"[PLOT] saved: {plot_out}")
@@ -782,17 +865,24 @@ def main():
         "best_epoch": int(best_epoch),
         "best_macro_auc": None if np.isnan(best_macro) else float(best_macro),
         "per_digit_best_auc": best_per_digit,
-        "best_sklearn_silhouette_train": best_sil,
+        "best_sklearn_silhouette_test": best_sil,
+        "best_outline_frac": best_extras.get("outline_frac"),
         "best_hungarian_acc": best_unsup.get("hungarian_acc"),
         "best_nmi": best_unsup.get("nmi"),
         "best_ari": best_unsup.get("ari"),
+        "test_cluster_class_density": best_extras.get("cluster_class_density"),
+        "test_cluster_class_counts": best_extras.get("cluster_class_counts"),
+        "test_cluster_sizes": best_extras.get("cluster_sizes"),
         "select_metric": args.select_metric,
         "center_init": args.center_init,
         "preprocess": args.preprocess,
+        "lambda_excl": args.lambda_excl,
+        "margin_excl": args.margin_excl,
         "lambda_sil": args.lambda_sil,
         "lambda_sil_inter": args.lambda_sil_inter,
         "lambda_overlap": args.lambda_overlap,
         "margin_overlap": args.margin_overlap,
+        "k_min": args.k_min,
         "enable_pruning": args.enable_pruning,
         "seed": args.seed,
     }

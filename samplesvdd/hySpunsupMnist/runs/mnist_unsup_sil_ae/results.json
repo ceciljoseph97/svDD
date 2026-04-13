@@ -1,0 +1,29 @@
+{
+  "best_epoch": 25,
+  "best_macro_auc": 0.5381576495280971,
+  "per_digit_best_auc": {
+    "0": 0.6022333307797858,
+    "1": 0.290101804754323,
+    "2": 0.30626208562558177,
+    "3": 0.16798248216831504,
+    "4": 0.7292214883712851,
+    "5": 0.5044478184711416,
+    "6": 0.672888473792633,
+    "7": 0.7257086200058628,
+    "8": 0.5344281620446628,
+    "9": 0.8483022292673797
+  },
+  "best_sklearn_silhouette_train": 0.8613671660423279,
+  "best_hungarian_acc": 0.11636774466883208,
+  "best_nmi": 0.007871691745095749,
+  "best_ari": 4.9880357313108494e-05,
+  "select_metric": "silhouette",
+  "center_init": "unsup_head_means",
+  "preprocess": "digit_minmax",
+  "lambda_sil": 1.0,
+  "lambda_sil_inter": 1.0,
+  "lambda_overlap": 0.01,
+  "margin_overlap": 0.05,
+  "enable_pruning": false,
+  "seed": 42
+}
