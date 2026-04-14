@@ -1,6 +1,7 @@
 import glob
 import hashlib
 import os
+from collections import defaultdict
 from typing import List, Optional, Tuple
 
 import numpy as np
@@ -65,6 +66,7 @@ class MNISTDigitsProcessedRawDataset(Dataset):
         train_fraction: float = 0.8,
         digits: Optional[List[int]] = None,
         max_samples: Optional[int] = None,
+        max_samples_per_class: Optional[int] = None,
     ):
         assert split in ("train", "test")
         self.root_dir = root_dir
@@ -82,6 +84,16 @@ class MNISTDigitsProcessedRawDataset(Dataset):
             self.samples = [(p, d) for (p, d) in all_paths if _in_split(p, self.train_fraction)]
         else:
             self.samples = [(p, d) for (p, d) in all_paths if not _in_split(p, self.train_fraction)]
+
+        if max_samples_per_class is not None:
+            by_d: dict[int, List[Tuple[str, int]]] = defaultdict(list)
+            for p, d in self.samples:
+                by_d[d].append((p, d))
+            balanced: List[Tuple[str, int]] = []
+            for d in digits:
+                cls_items = sorted(by_d[d], key=lambda x: x[0])[: int(max_samples_per_class)]
+                balanced.extend(cls_items)
+            self.samples = balanced
 
         if max_samples is not None:
             self.samples = self.samples[: int(max_samples)]

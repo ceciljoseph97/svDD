@@ -1,7 +1,6 @@
 import argparse
 import json
 import os
-import random
 
 import numpy as np
 import torch
@@ -21,26 +20,6 @@ from hyperbolic_multi_sphere import (
     update_radii,
 )
 from hyperbolic_ops import hyp_distance
-
-
-def seed_everything(seed: int, deterministic: bool = True) -> None:
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    if deterministic:
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
-        try:
-            torch.use_deterministic_algorithms(True, warn_only=True)
-        except TypeError:
-            torch.use_deterministic_algorithms(True)
-
-
-def _seed_worker(worker_id: int) -> None:
-    worker_seed = torch.initial_seed() % (2 ** 32)
-    np.random.seed(worker_seed)
-    random.seed(worker_seed)
 
 
 class ScaledDigitDataset(Dataset):
@@ -136,8 +115,8 @@ def main():
     p.add_argument("--rep_dim", type=int, default=32)
     p.add_argument("--z_dim", type=int, default=16)
     p.add_argument("--curvature", type=float, default=1.0)
-    p.add_argument("--ae_n_epochs", type=int, default=150)
-    p.add_argument("--svdd_n_epochs", type=int, default=100)
+    p.add_argument("--ae_n_epochs", type=int, default=10)
+    p.add_argument("--svdd_n_epochs", type=int, default=25)
     p.add_argument("--ae_lr", type=float, default=1e-3)
     p.add_argument("--lr", type=float, default=1e-4)
     p.add_argument("--weight_decay", type=float, default=1e-6)
@@ -148,10 +127,8 @@ def main():
     p.add_argument("--margin_excl", type=float, default=0.1, help="Exclusion margin outside non-true spheres.")
     p.add_argument("--lambda_overlap", type=float, default=1e-2, help="Weight of sphere overlap penalty.")
     p.add_argument("--margin_overlap", type=float, default=0.05, help="Required extra separation between spheres.")
-    p.add_argument("--warm_up_n_epochs", type=int, default=10)
+    p.add_argument("--warm_up_n_epochs", type=int, default=5)
     p.add_argument("--eval_every", type=int, default=5)
-    p.add_argument("--seed", type=int, default=42)
-    p.add_argument("--deterministic", action="store_true")
     p.add_argument(
         "--skip_ae_pretrain",
         action="store_true",
@@ -171,12 +148,7 @@ def main():
     )
     args = p.parse_args()
 
-    # Required by CUDA/cuBLAS for deterministic GEMM paths on older PyTorch builds.
-    if args.deterministic and "CUBLAS_WORKSPACE_CONFIG" not in os.environ:
-        os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
-
     os.makedirs(args.xp_path, exist_ok=True)
-    seed_everything(args.seed, deterministic=args.deterministic)
     device = torch.device(args.device)
     digits = list(range(10)) if args.digits == "all" else [int(x) for x in args.digits.split(",") if x.strip()]
 
@@ -188,24 +160,8 @@ def main():
     )
     tr = ScaledDigitDataset(tr_raw)
     te = ScaledDigitDataset(te_raw)
-    loader_gen = torch.Generator()
-    loader_gen.manual_seed(args.seed)
-    tr_loader = DataLoader(
-        tr,
-        batch_size=args.batch_size,
-        shuffle=True,
-        num_workers=args.n_jobs_dataloader,
-        worker_init_fn=_seed_worker,
-        generator=loader_gen,
-    )
-    te_loader = DataLoader(
-        te,
-        batch_size=args.batch_size,
-        shuffle=False,
-        num_workers=args.n_jobs_dataloader,
-        worker_init_fn=_seed_worker,
-        generator=loader_gen,
-    )
+    tr_loader = DataLoader(tr, batch_size=args.batch_size, shuffle=True, num_workers=args.n_jobs_dataloader)
+    te_loader = DataLoader(te, batch_size=args.batch_size, shuffle=False, num_workers=args.n_jobs_dataloader)
 
     backbone = MNIST_LeNet_SVDDIAE(rep_dim=args.rep_dim)
     model = HyperbolicMultiSphereSVDD(backbone=backbone, rep_dim=args.rep_dim, z_dim=args.z_dim, n_digits=10, c=args.curvature).to(device)
@@ -321,8 +277,6 @@ def main():
                         "margin_excl": args.margin_excl,
                         "lambda_overlap": args.lambda_overlap,
                         "margin_overlap": args.margin_overlap,
-                        "seed": args.seed,
-                        "deterministic": args.deterministic,
                     },
                     os.path.join(args.xp_path, "checkpoint_best.pth"),
                 )
@@ -339,8 +293,6 @@ def main():
                 "margin_excl": args.margin_excl,
                 "lambda_overlap": args.lambda_overlap,
                 "margin_overlap": args.margin_overlap,
-                "seed": args.seed,
-                "deterministic": args.deterministic,
             },
             os.path.join(args.xp_path, "checkpoint_latest.pth"),
         )
@@ -355,8 +307,6 @@ def main():
         "margin_excl": args.margin_excl,
         "lambda_overlap": args.lambda_overlap,
         "margin_overlap": args.margin_overlap,
-        "seed": args.seed,
-        "deterministic": args.deterministic,
     }
     with open(os.path.join(args.xp_path, "results.json"), "w", encoding="utf-8") as f:
         json.dump(out, f, indent=2)

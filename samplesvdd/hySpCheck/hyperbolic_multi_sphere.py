@@ -72,6 +72,19 @@ def update_radii(dist_sq_by_digit, nu: float, device: torch.device) -> torch.Ten
     return r
 
 
+def update_radii_unsupervised(dist_sq_chunks_per_k: list, nu: float, device: torch.device) -> torch.Tensor:
+    """Same radius rule as update_radii, but each list entry is all dist_sq values for sphere k (any batch)."""
+
+    r = torch.zeros((len(dist_sq_chunks_per_k),), device=device, dtype=torch.float32)
+    for k, chunks in enumerate(dist_sq_chunks_per_k):
+        if len(chunks) == 0:
+            continue
+        d = torch.cat(chunks, dim=0)
+        q = d.sqrt().float().quantile(float(1.0 - nu)).item()
+        r[k] = q
+    return r
+
+
 def init_centers_h(model: HyperbolicMultiSphereSVDD, train_loader, device: torch.device, eps: float = 1e-5):
     with torch.no_grad():
         c = torch.zeros((model.n_digits, model.z_dim), device=device)
