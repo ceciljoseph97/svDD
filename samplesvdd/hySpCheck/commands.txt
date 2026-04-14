@@ -1,0 +1,84 @@
+# MNIST hyperbolic multi-sphere (train_hyp_mnist_multi.py + visualize_hyp_mnist_suite.py)
+# Repository root = SvDDChecks (parent of samplesvdd/). Linux/bash; GPU optional (set device or CUDA_VISIBLE_DEVICES).
+#
+# Working directory MUST be samplesvdd/hySpCheck so local imports (mnist_local, hyperbolic_*, etc.) resolve.
+
+cd samplesvdd/hySpCheck
+
+REPO_ROOT="$(cd ../.. && pwd)"
+MNIST_DATA="${REPO_ROOT}/CVAEChecked/Data/MNIST_processed"
+AE_STAGE1="${REPO_ROOT}/samplesvdd/hySpCheck/runs/ablate_mnist_full_t2_ae150/ae_stage1_ep150.pth"
+
+# --- Shared flags: skip AE, load pretrained stage-1, soft-boundary SVDD (defaults match train_hyp_mnist_multi.py) ---
+# Baseline (default lambdas: lambda_excl=1e-2, lambda_overlap=1e-2)
+python train_hyp_mnist_multi.py \
+  --mnist_processed_dir "${MNIST_DATA}" \
+  --skip_ae_pretrain \
+  --ae_stage1_checkpoint_path "${AE_STAGE1}" \
+  --xp_path runs/mnist_baseline_from_ae150 \
+  --device cuda
+
+# --- Exclusion term sensitivity: vary --lambda_excl; keep overlap penalty at defaults (lambda_overlap=1e-2, margin_overlap=0.05) ---
+python train_hyp_mnist_multi.py --mnist_processed_dir "${MNIST_DATA}" --skip_ae_pretrain --ae_stage1_checkpoint_path "${AE_STAGE1}" \
+  --xp_path runs/sens_mnist_excl_lambda0 --lambda_excl 0 --margin_excl 0.1 --lambda_overlap 1e-2 --margin_overlap 0.05 --device cuda
+
+python train_hyp_mnist_multi.py --mnist_processed_dir "${MNIST_DATA}" --skip_ae_pretrain --ae_stage1_checkpoint_path "${AE_STAGE1}" \
+  --xp_path runs/sens_mnist_excl_lambda1e-4 --lambda_excl 1e-4 --margin_excl 0.1 --lambda_overlap 1e-2 --margin_overlap 0.05 --device cuda
+
+python train_hyp_mnist_multi.py --mnist_processed_dir "${MNIST_DATA}" --skip_ae_pretrain --ae_stage1_checkpoint_path "${AE_STAGE1}" \
+  --xp_path runs/sens_mnist_excl_lambda1e-3 --lambda_excl 1e-3 --margin_excl 0.1 --lambda_overlap 1e-2 --margin_overlap 0.05 --device cuda
+
+python train_hyp_mnist_multi.py --mnist_processed_dir "${MNIST_DATA}" --skip_ae_pretrain --ae_stage1_checkpoint_path "${AE_STAGE1}" \
+  --xp_path runs/sens_mnist_excl_lambda1e-2 --lambda_excl 1e-2 --margin_excl 0.1 --lambda_overlap 1e-2 --margin_overlap 0.05 --device cuda
+
+python train_hyp_mnist_multi.py --mnist_processed_dir "${MNIST_DATA}" --skip_ae_pretrain --ae_stage1_checkpoint_path "${AE_STAGE1}" \
+  --xp_path runs/sens_mnist_excl_lambda1e-1 --lambda_excl 1e-1 --margin_excl 0.1 --lambda_overlap 1e-2 --margin_overlap 0.05 --device cuda
+
+# Optional: also sweep --margin_excl (e.g. 0.05, 0.2) at fixed lambda_excl=1e-2 by changing --margin_excl and --xp_path.
+
+# --- Overlapping-sphere term sensitivity: vary --lambda_overlap; keep exclusion at defaults (lambda_excl=1e-2, margin_excl=0.1) ---
+python train_hyp_mnist_multi.py --mnist_processed_dir "${MNIST_DATA}" --skip_ae_pretrain --ae_stage1_checkpoint_path "${AE_STAGE1}" \
+  --xp_path runs/sens_mnist_overlap_lambda0 --lambda_excl 1e-2 --margin_excl 0.1 --lambda_overlap 0 --margin_overlap 0.05 --device cuda
+
+python train_hyp_mnist_multi.py --mnist_processed_dir "${MNIST_DATA}" --skip_ae_pretrain --ae_stage1_checkpoint_path "${AE_STAGE1}" \
+  --xp_path runs/sens_mnist_overlap_lambda1e-4 --lambda_excl 1e-2 --margin_excl 0.1 --lambda_overlap 1e-4 --margin_overlap 0.05 --device cuda
+
+python train_hyp_mnist_multi.py --mnist_processed_dir "${MNIST_DATA}" --skip_ae_pretrain --ae_stage1_checkpoint_path "${AE_STAGE1}" \
+  --xp_path runs/sens_mnist_overlap_lambda1e-3 --lambda_excl 1e-2 --margin_excl 0.1 --lambda_overlap 1e-3 --margin_overlap 0.05 --device cuda
+
+python train_hyp_mnist_multi.py --mnist_processed_dir "${MNIST_DATA}" --skip_ae_pretrain --ae_stage1_checkpoint_path "${AE_STAGE1}" \
+  --xp_path runs/sens_mnist_overlap_lambda1e-2 --lambda_excl 1e-2 --margin_excl 0.1 --lambda_overlap 1e-2 --margin_overlap 0.05 --device cuda
+
+python train_hyp_mnist_multi.py --mnist_processed_dir "${MNIST_DATA}" --skip_ae_pretrain --ae_stage1_checkpoint_path "${AE_STAGE1}" \
+  --xp_path runs/sens_mnist_overlap_lambda1e-1 --lambda_excl 1e-2 --margin_excl 0.1 --lambda_overlap 1e-1 --margin_overlap 0.05 --device cuda
+
+# --- After training: one-shot visualization suite (t-SNE, Poincaré 3D HTML, in-class extremes, neural activation maps) ---
+# Example: single run
+python visualize_hyp_mnist_suite.py \
+  --mnist_processed_dir "${MNIST_DATA}" \
+  --out_dir runs/suite_vis_baseline \
+  --checkpoints baseline=runs/mnist_baseline_from_ae150/checkpoint_best.pth
+
+# Example: batch several checkpoints (TAG=PATH). Add/remove lines to match runs you actually trained.
+python visualize_hyp_mnist_suite.py \
+  --mnist_processed_dir "${MNIST_DATA}" \
+  --out_dir runs/suite_vis_excl_sweep \
+  --checkpoints \
+    excl0=runs/sens_mnist_excl_lambda0/checkpoint_best.pth \
+    excl1e-4=runs/sens_mnist_excl_lambda1e-4/checkpoint_best.pth \
+    excl1e-2=runs/sens_mnist_excl_lambda1e-2/checkpoint_best.pth
+
+python visualize_hyp_mnist_suite.py \
+  --mnist_processed_dir "${MNIST_DATA}" \
+  --out_dir runs/suite_vis_overlap_sweep \
+  --checkpoints \
+    ov0=runs/sens_mnist_overlap_lambda0/checkpoint_best.pth \
+    ov1e-4=runs/sens_mnist_overlap_lambda1e-4/checkpoint_best.pth \
+    ov1e-2=runs/sens_mnist_overlap_lambda1e-2/checkpoint_best.pth
+
+# Optional: also render the shared AE checkpoint alone (SVDD-specific plots are skipped for AE-only).
+python visualize_hyp_mnist_suite.py \
+  --mnist_processed_dir "${MNIST_DATA}" \
+  --out_dir runs/suite_vis_ae_only \
+  --checkpoints ae150="${AE_STAGE1}" \
+  --skip_svdd

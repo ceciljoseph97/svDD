@@ -1,0 +1,84 @@
+# CIFAR-10 hyperbolic multi-sphere (train_hyp_cifar_multi.py + visualize_hyp_cifar_suite.py)
+# Repository root = SvDDChecks. Linux/bash.
+#
+# Working directory MUST be samplesvdd/hySpCheckcifar (local imports: cifar10_data, cifar_backbone, hyperbolic_*, etc.).
+
+cd samplesvdd/hySpCheckcifar
+
+REPO_ROOT="$(cd ../.. && pwd)"
+# Default: bundled extracted CIFAR (or set DATA_ROOT to any folder containing cifar-10-batches-py/)
+DATA_ROOT="${REPO_ROOT}/samplesvdd/hySpCheckcifar/data"
+
+# --- Optional: reuse AE for sweeps (same flags as MNIST) ---
+# First run: --save_ae_stage1_checkpoint_path runs/my_cifar/ae_stage1.pth
+# Then sweeps: --skip_ae_pretrain --ae_stage1_checkpoint_path runs/my_cifar/ae_stage1.pth
+
+# Example: full train from scratch (no pretrained AE)
+python train_hyp_cifar_multi.py \
+  --data_root "${DATA_ROOT}" \
+  --xp_path runs/cifar_baseline \
+  --device cuda
+
+# Example: skip AE and load stage-1 (replace with your saved path after you create one)
+# AE_CIFAR="${REPO_ROOT}/samplesvdd/hySpCheckcifar/runs/your_ae_run/ae_stage1.pth"
+# python train_hyp_cifar_multi.py --data_root "${DATA_ROOT}" --skip_ae_pretrain --ae_stage1_checkpoint_path "${AE_CIFAR}" \
+#   --xp_path runs/cifar_from_ae --device cuda
+
+# --- Exclusion term sensitivity (vary --lambda_excl; default overlap: lambda_overlap=1e-2, margin_overlap=0.05) ---
+python train_hyp_cifar_multi.py --data_root "${DATA_ROOT}" --xp_path runs/sens_cifar_excl_lambda0 \
+  --lambda_excl 0 --margin_excl 0.1 --lambda_overlap 1e-2 --margin_overlap 0.05 --device cuda
+
+python train_hyp_cifar_multi.py --data_root "${DATA_ROOT}" --xp_path runs/sens_cifar_excl_lambda1e-4 \
+  --lambda_excl 1e-4 --margin_excl 0.1 --lambda_overlap 1e-2 --margin_overlap 0.05 --device cuda
+
+python train_hyp_cifar_multi.py --data_root "${DATA_ROOT}" --xp_path runs/sens_cifar_excl_lambda1e-3 \
+  --lambda_excl 1e-3 --margin_excl 0.1 --lambda_overlap 1e-2 --margin_overlap 0.05 --device cuda
+
+python train_hyp_cifar_multi.py --data_root "${DATA_ROOT}" --xp_path runs/sens_cifar_excl_lambda1e-2 \
+  --lambda_excl 1e-2 --margin_excl 0.1 --lambda_overlap 1e-2 --margin_overlap 0.05 --device cuda
+
+python train_hyp_cifar_multi.py --data_root "${DATA_ROOT}" --xp_path runs/sens_cifar_excl_lambda1e-1 \
+  --lambda_excl 1e-1 --margin_excl 0.1 --lambda_overlap 1e-2 --margin_overlap 0.05 --device cuda
+
+# --- Overlapping-sphere term sensitivity (vary --lambda_overlap; default exclusion: lambda_excl=1e-2, margin_excl=0.1) ---
+python train_hyp_cifar_multi.py --data_root "${DATA_ROOT}" --xp_path runs/sens_cifar_overlap_lambda0 \
+  --lambda_excl 1e-2 --margin_excl 0.1 --lambda_overlap 0 --margin_overlap 0.05 --device cuda
+
+python train_hyp_cifar_multi.py --data_root "${DATA_ROOT}" --xp_path runs/sens_cifar_overlap_lambda1e-4 \
+  --lambda_excl 1e-2 --margin_excl 0.1 --lambda_overlap 1e-4 --margin_overlap 0.05 --device cuda
+
+python train_hyp_cifar_multi.py --data_root "${DATA_ROOT}" --xp_path runs/sens_cifar_overlap_lambda1e-3 \
+  --lambda_excl 1e-2 --margin_excl 0.1 --lambda_overlap 1e-3 --margin_overlap 0.05 --device cuda
+
+python train_hyp_cifar_multi.py --data_root "${DATA_ROOT}" --xp_path runs/sens_cifar_overlap_lambda1e-2 \
+  --lambda_excl 1e-2 --margin_excl 0.1 --lambda_overlap 1e-2 --margin_overlap 0.05 --device cuda
+
+python train_hyp_cifar_multi.py --data_root "${DATA_ROOT}" --xp_path runs/sens_cifar_overlap_lambda1e-1 \
+  --lambda_excl 1e-2 --margin_excl 0.1 --lambda_overlap 1e-1 --margin_overlap 0.05 --device cuda
+
+# --- After training: CIFAR visualization suite (t-SNE aligned with visualize_hyp_cifar_tsne, 3D Poincaré HTML, in-class extremes, neural maps) ---
+python visualize_hyp_cifar_suite.py \
+  --data_root "${DATA_ROOT}" \
+  --out_dir runs/suite_vis_cifar_baseline \
+  --checkpoints baseline=runs/cifar_baseline/checkpoint_best.pth
+
+python visualize_hyp_cifar_suite.py \
+  --data_root "${DATA_ROOT}" \
+  --out_dir runs/suite_vis_cifar_excl_sweep \
+  --checkpoints \
+    excl0=runs/sens_cifar_excl_lambda0/checkpoint_best.pth \
+    excl1e-4=runs/sens_cifar_excl_lambda1e-4/checkpoint_best.pth \
+    excl1e-2=runs/sens_cifar_excl_lambda1e-2/checkpoint_best.pth
+
+python visualize_hyp_cifar_suite.py \
+  --data_root "${DATA_ROOT}" \
+  --out_dir runs/suite_vis_cifar_overlap_sweep \
+  --checkpoints \
+    ov0=runs/sens_cifar_overlap_lambda0/checkpoint_best.pth \
+    ov1e-4=runs/sens_cifar_overlap_lambda1e-4/checkpoint_best.pth \
+    ov1e-2=runs/sens_cifar_overlap_lambda1e-2/checkpoint_best.pth
+
+# Stand-alone tools (same outputs as before; suite delegates to equivalent logic for t-SNE / Poincaré / in-class):
+# python visualize_hyp_cifar_tsne.py --data_root "${DATA_ROOT}" --checkpoint_path runs/cifar_baseline/checkpoint_best.pth --out_dir runs/tsne_standalone
+# python visualize_hyp_cifar_poincare_3d_interactive.py --data_root "${DATA_ROOT}" --checkpoint_path ... --out_dir ...
+# python visualize_inclass_extremes_cifar.py --data_root "${DATA_ROOT}" --checkpoint_path ... --all_classes --combined --out_dir ...
