@@ -1,0 +1,79 @@
+{
+  "version": 2,
+  "checkpoint_selection": "min_training_loss",
+  "best_epoch": 50,
+  "best_training_loss": 0.678544431516569,
+  "macro_auc_test_at_best_epoch": 0.499382437208218,
+  "per_digit_auc_at_best_epoch": {
+    "0": 0.49548733358390395,
+    "1": 0.5334660529344073,
+    "2": 0.45753180870822757,
+    "3": 0.48548999449950636,
+    "4": 0.494064953238207,
+    "5": 0.46731572592139364,
+    "6": 0.5012690234326759,
+    "7": 0.5285618649388418,
+    "8": 0.504539568592551,
+    "9": 0.526098046232466
+  },
+  "macro_auc_test_pruned_active_spheres": 0.499382437208218,
+  "per_digit_auc_test_pruned_active_spheres": {
+    "0": 0.49548733358390395,
+    "1": 0.5334660529344073,
+    "2": 0.45753180870822757,
+    "3": 0.48548999449950636,
+    "4": 0.494064953238207,
+    "5": 0.46731572592139364,
+    "6": 0.5012690234326759,
+    "7": 0.5285618649388418,
+    "8": 0.504539568592551,
+    "9": 0.526098046232466
+  },
+  "curvature": 1.0,
+  "objective": "union-soft",
+  "unsupervised": true,
+  "ae_checkpoint": "/home/josepcec/Downloads/OASPL/svDD/samplesvdd/hySpCheck/runs/ablate_mnist_full_t2_ae150/ae_stage1_ep150.pth",
+  "prune": {
+    "train_argmin_counts": [
+      0,
+      56045,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "silhouette_mean_per_cluster_euclidean_z": {
+      "0": null,
+      "1": null,
+      "2": null,
+      "3": null,
+      "4": null,
+      "5": null,
+      "6": null,
+      "7": null,
+      "8": null,
+      "9": null
+    },
+    "active_cluster_mask": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "union_test_metrics_active_spheres": {
+    "union_frac_inside": 0.9034754568255106,
+    "union_margin_mean": -0.09056441485881805,
+    "union_margin_std": 0.0698155090212822
+  }
+}
