@@ -1,3 +1,0 @@
-hySpCheck+Cifar Variant is Supervised, class conditioned Version, It is not applicable for direct comparison with Deep SVDD or Deep multi Sphere SVDD -  But from AE implementation in Supervised - Good compartmentalization plus .99 macro with - .993-.999 Varying onevrest
-
-unsupervised approach is introduced in hySpCheckunSup - Similar Hyperbolic Good Seperation, but MAcro max i got is .73 which is lower but the method is pure and can hypertune.

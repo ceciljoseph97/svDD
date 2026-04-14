@@ -1,0 +1,9 @@
+{
+  "tag": "ae150",
+  "checkpoint": "D:\\Doctorate\\EngineCheck\\oasplTurbojet\\SampleSvDD\\samplesvdd\\hySpCheck\\runs\\ablate_mnist_full_t2_ae150\\ae_stage1_ep150.pth",
+  "has_svdd": false,
+  "rep_dim": 32,
+  "z_dim": null,
+  "curvature": null,
+  "objective": null
+}

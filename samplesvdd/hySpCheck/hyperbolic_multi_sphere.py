@@ -73,16 +73,9 @@ def update_radii(dist_sq_by_digit, nu: float, device: torch.device) -> torch.Ten
 
 
 def update_radii_unsupervised(dist_sq_chunks_per_k: list, nu: float, device: torch.device) -> torch.Tensor:
-    """Same radius rule as update_radii, but each list entry is all dist_sq values for sphere k (any batch)."""
+    """Same rule as ``update_radii``: each list entry collects dist² to center k for points whose nearest sphere was k."""
 
-    r = torch.zeros((len(dist_sq_chunks_per_k),), device=device, dtype=torch.float32)
-    for k, chunks in enumerate(dist_sq_chunks_per_k):
-        if len(chunks) == 0:
-            continue
-        d = torch.cat(chunks, dim=0)
-        q = d.sqrt().float().quantile(float(1.0 - nu)).item()
-        r[k] = q
-    return r
+    return update_radii(dist_sq_chunks_per_k, nu, device)
 
 
 def init_centers_h(model: HyperbolicMultiSphereSVDD, train_loader, device: torch.device, eps: float = 1e-5):
@@ -103,4 +96,74 @@ def init_centers_h(model: HyperbolicMultiSphereSVDD, train_loader, device: torch
         c = c / n
         c = proj_ball(c, c=model.curvature, eps=eps)
     return c
+
+
+def init_centers_h_unsupervised(
+    model: HyperbolicMultiSphereSVDD, train_loader, device: torch.device, eps: float = 1e-5
+):
+    """Fréchet-style batch mean in the ball: average each head's hyperbolic embedding over all training points (no labels)."""
+
+    with torch.no_grad():
+        acc = torch.zeros((model.n_digits, model.z_dim), device=device)
+        count = 0
+        for batch in train_loader:
+            x_scaled = batch[0].to(device) if isinstance(batch, (list, tuple)) else batch.to(device)
+            rep, _ = model(x_scaled)
+            z_all_h = model.project_all_h(rep)
+            acc += z_all_h.sum(dim=0)
+            count += int(x_scaled.size(0))
+        c = acc / float(max(count, 1))
+        c = proj_ball(c, c=model.curvature, eps=eps)
+    return c
+
+
+def soft_assignment_weights(dist_sq_all: torch.Tensor, beta: float) -> torch.Tensor:
+    """Responsibilities q_{ik} ∝ exp(-beta * d_{ik}^2); rows sum to 1."""
+
+    return torch.softmax(-float(beta) * dist_sq_all, dim=1)
+
+
+def unsupervised_multi_sphere_loss(dist_sq_all: torch.Tensor, beta: float) -> torch.Tensor:
+    """Expected distance under soft assignment (DAGMM-style): sum_k q_{ik} d_{ik}^2 averaged over batch."""
+
+    w = soft_assignment_weights(dist_sq_all, beta)
+    return torch.mean(torch.sum(w * dist_sq_all, dim=1))
+
+
+def tune_gamma_unsup(
+    model: HyperbolicMultiSphereSVDD,
+    train_loader,
+    criterion_rec,
+    device: torch.device,
+    beta: float,
+    T: int = 5,
+) -> float:
+    """DASVDD-style ratio E[recon] / E[soft multi-sphere distance] over T random forward passes (no grad)."""
+
+    model.eval()
+    gammas = []
+    for _ in range(T):
+        tot_rec = 0.0
+        tot_ms = 0.0
+        n_batches = 0
+        for batch in train_loader:
+            x_scaled = batch[0].to(device) if isinstance(batch, (list, tuple)) else batch.to(device)
+            rep, recon = model(x_scaled)
+            rec = criterion_rec(recon, x_scaled)
+            z_all = model.project_all_h(rep)
+            with torch.no_grad():
+                c0 = torch.zeros((model.n_digits, model.z_dim), device=device)
+                for k in range(model.n_digits):
+                    c0[k] = z_all[:, k, :].mean(dim=0)
+                c0 = proj_ball(c0, c=model.curvature)
+                dist_sq_all = dist_sq_to_all_centers(z_all, c0, curvature=model.curvature)
+                ms = unsupervised_multi_sphere_loss(dist_sq_all, beta)
+            tot_rec += float(rec.item())
+            tot_ms += float(ms.item())
+            n_batches += 1
+        if n_batches == 0 or tot_ms <= 1e-12:
+            continue
+        gammas.append(tot_rec / n_batches / (tot_ms / n_batches))
+    model.train()
+    return float(sum(gammas) / max(len(gammas), 1)) if gammas else 1.0
 
