@@ -1,64 +1,64 @@
 {
   "split": "test",
-  "samples_per_cluster": 12,
+  "samples_per_cluster": 20,
   "nearest_sphere_assignment": "active_argmin",
   "active_cluster_mask": [
-    true,
-    true,
-    true,
-    true,
-    true,
     false,
     true,
     false,
-    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
   ],
   "clusters": {
     "0": {
       "digit_counts_exported": {
         "0": 0,
-        "1": 10,
+        "1": 0,
         "2": 0,
-        "3": 1,
+        "3": 0,
         "4": 0,
         "5": 0,
-        "6": 1,
+        "6": 0,
         "7": 0,
         "8": 0,
         "9": 0
       },
-      "total_available_in_split": 613
+      "total_available_in_split": 0
     },
     "1": {
       "digit_counts_exported": {
-        "0": 0,
+        "0": 2,
         "1": 1,
         "2": 1,
-        "3": 3,
-        "4": 1,
-        "5": 2,
-        "6": 0,
+        "3": 5,
+        "4": 4,
+        "5": 1,
+        "6": 3,
         "7": 0,
         "8": 1,
-        "9": 3
+        "9": 2
       },
-      "total_available_in_split": 13002
+      "total_available_in_split": 13955
     },
     "2": {
       "digit_counts_exported": {
-        "0": 1,
+        "0": 0,
         "1": 0,
-        "2": 4,
-        "3": 1,
+        "2": 0,
+        "3": 0,
         "4": 0,
         "5": 0,
-        "6": 6,
+        "6": 0,
         "7": 0,
         "8": 0,
         "9": 0
       },
-      "total_available_in_split": 237
+      "total_available_in_split": 0
     },
     "3": {
       "digit_counts_exported": {
@@ -66,14 +66,14 @@
         "1": 0,
         "2": 0,
         "3": 0,
-        "4": 1,
+        "4": 0,
         "5": 0,
         "6": 0,
-        "7": 7,
-        "8": 3,
-        "9": 1
+        "7": 0,
+        "8": 0,
+        "9": 0
       },
-      "total_available_in_split": 39
+      "total_available_in_split": 0
     },
     "4": {
       "digit_counts_exported": {
@@ -81,14 +81,14 @@
         "1": 0,
         "2": 0,
         "3": 0,
-        "4": 4,
+        "4": 0,
         "5": 0,
-        "6": 6,
-        "7": 2,
+        "6": 0,
+        "7": 0,
         "8": 0,
         "9": 0
       },
-      "total_available_in_split": 176
+      "total_available_in_split": 0
     },
     "5": {
       "digit_counts_exported": {
@@ -107,18 +107,18 @@
     },
     "6": {
       "digit_counts_exported": {
-        "0": 2,
+        "0": 0,
         "1": 0,
         "2": 0,
         "3": 0,
-        "4": 8,
+        "4": 0,
         "5": 0,
-        "6": 2,
+        "6": 0,
         "7": 0,
         "8": 0,
         "9": 0
       },
-      "total_available_in_split": 49
+      "total_available_in_split": 0
     },
     "7": {
       "digit_counts_exported": {
@@ -138,7 +138,7 @@
     "8": {
       "digit_counts_exported": {
         "0": 0,
-        "1": 12,
+        "1": 0,
         "2": 0,
         "3": 0,
         "4": 0,
@@ -148,7 +148,7 @@
         "8": 0,
         "9": 0
       },
-      "total_available_in_split": 46
+      "total_available_in_split": 0
     },
     "9": {
       "digit_counts_exported": {
