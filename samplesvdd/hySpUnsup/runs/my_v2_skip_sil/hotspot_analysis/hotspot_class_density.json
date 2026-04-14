@@ -1,0 +1,343 @@
+{
+  "split": "test",
+  "nearest_sphere_assignment": "active_argmin",
+  "active_cluster_mask": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    true,
+    false,
+    true,
+    false
+  ],
+  "total_samples": 14162,
+  "counts_cluster_x_digit": [
+    [
+      1,
+      486,
+      48,
+      33,
+      0,
+      4,
+      38,
+      1,
+      1,
+      1
+    ],
+    [
+      1373,
+      1057,
+      1361,
+      1350,
+      1225,
+      1268,
+      1184,
+      1454,
+      1376,
+      1354
+    ],
+    [
+      11,
+      12,
+      32,
+      22,
+      3,
+      7,
+      143,
+      7,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      2,
+      0,
+      0,
+      21,
+      15,
+      1
+    ],
+    [
+      2,
+      0,
+      3,
+      2,
+      120,
+      1,
+      42,
+      4,
+      0,
+      2
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      3,
+      0,
+      0,
+      0,
+      18,
+      1,
+      15,
+      0,
+      0,
+      12
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      46,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  ],
+  "per_cluster": {
+    "0": {
+      "n": 613,
+      "entropy_digit_mix_nat": 0.7879,
+      "hotspot_digit_argmax_P_d_given_k": 1,
+      "top3_digits_by_density": {
+        "1": 0.79282,
+        "2": 0.0783,
+        "6": 0.06199
+      }
+    },
+    "1": {
+      "n": 13002,
+      "entropy_digit_mix_nat": 2.2988,
+      "hotspot_digit_argmax_P_d_given_k": 7,
+      "top3_digits_by_density": {
+        "7": 0.11183,
+        "8": 0.10583,
+        "0": 0.1056
+      }
+    },
+    "2": {
+      "n": 237,
+      "entropy_digit_mix_nat": 1.3528,
+      "hotspot_digit_argmax_P_d_given_k": 6,
+      "top3_digits_by_density": {
+        "6": 0.60338,
+        "2": 0.13502,
+        "3": 0.09283
+      }
+    },
+    "3": {
+      "n": 39,
+      "entropy_digit_mix_nat": 0.9471,
+      "hotspot_digit_argmax_P_d_given_k": 7,
+      "top3_digits_by_density": {
+        "7": 0.53846,
+        "8": 0.38462,
+        "4": 0.05128
+      }
+    },
+    "4": {
+      "n": 176,
+      "entropy_digit_mix_nat": 0.9405,
+      "hotspot_digit_argmax_P_d_given_k": 4,
+      "top3_digits_by_density": {
+        "4": 0.68182,
+        "6": 0.23864,
+        "7": 0.02273
+      }
+    },
+    "5": {
+      "n": 0,
+      "entropy_digit_mix_nat": -0.0,
+      "hotspot_digit_argmax_P_d_given_k": 0,
+      "top3_digits_by_density": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.0
+      }
+    },
+    "6": {
+      "n": 49,
+      "entropy_digit_mix_nat": 1.3252,
+      "hotspot_digit_argmax_P_d_given_k": 4,
+      "top3_digits_by_density": {
+        "4": 0.36735,
+        "6": 0.30612,
+        "9": 0.2449
+      }
+    },
+    "7": {
+      "n": 0,
+      "entropy_digit_mix_nat": -0.0,
+      "hotspot_digit_argmax_P_d_given_k": 0,
+      "top3_digits_by_density": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.0
+      }
+    },
+    "8": {
+      "n": 46,
+      "entropy_digit_mix_nat": -0.0,
+      "hotspot_digit_argmax_P_d_given_k": 1,
+      "top3_digits_by_density": {
+        "1": 1.0,
+        "0": 0.0,
+        "2": 0.0
+      }
+    },
+    "9": {
+      "n": 0,
+      "entropy_digit_mix_nat": -0.0,
+      "hotspot_digit_argmax_P_d_given_k": 0,
+      "top3_digits_by_density": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.0
+      }
+    }
+  },
+  "per_digit": {
+    "0": {
+      "n": 1390,
+      "entropy_cluster_mix_nat": 0.0783,
+      "hotspot_cluster_argmax_P_k_given_d": 1,
+      "top3_clusters_by_density": {
+        "1": 0.98777,
+        "2": 0.00791,
+        "6": 0.00216
+      }
+    },
+    "1": {
+      "n": 1601,
+      "entropy_cluster_mix_nat": 0.7747,
+      "hotspot_cluster_argmax_P_k_given_d": 1,
+      "top3_clusters_by_density": {
+        "1": 0.66021,
+        "0": 0.30356,
+        "8": 0.02873
+      }
+    },
+    "2": {
+      "n": 1444,
+      "entropy_cluster_mix_nat": 0.2662,
+      "hotspot_cluster_argmax_P_k_given_d": 1,
+      "top3_clusters_by_density": {
+        "1": 0.94252,
+        "0": 0.03324,
+        "2": 0.02216
+      }
+    },
+    "3": {
+      "n": 1407,
+      "entropy_cluster_mix_nat": 0.202,
+      "hotspot_cluster_argmax_P_k_given_d": 1,
+      "top3_clusters_by_density": {
+        "1": 0.95949,
+        "0": 0.02345,
+        "2": 0.01564
+      }
+    },
+    "4": {
+      "n": 1368,
+      "entropy_cluster_mix_nat": 0.3923,
+      "hotspot_cluster_argmax_P_k_given_d": 1,
+      "top3_clusters_by_density": {
+        "1": 0.89547,
+        "4": 0.08772,
+        "6": 0.01316
+      }
+    },
+    "5": {
+      "n": 1281,
+      "entropy_cluster_mix_nat": 0.0677,
+      "hotspot_cluster_argmax_P_k_given_d": 1,
+      "top3_clusters_by_density": {
+        "1": 0.98985,
+        "2": 0.00546,
+        "0": 0.00312
+      }
+    },
+    "6": {
+      "n": 1422,
+      "entropy_cluster_mix_nat": 0.6323,
+      "hotspot_cluster_argmax_P_k_given_d": 1,
+      "top3_clusters_by_density": {
+        "1": 0.83263,
+        "2": 0.10056,
+        "4": 0.02954
+      }
+    },
+    "7": {
+      "n": 1487,
+      "entropy_cluster_mix_nat": 0.1282,
+      "hotspot_cluster_argmax_P_k_given_d": 1,
+      "top3_clusters_by_density": {
+        "1": 0.97781,
+        "3": 0.01412,
+        "2": 0.00471
+      }
+    },
+    "8": {
+      "n": 1392,
+      "entropy_cluster_mix_nat": 0.0654,
+      "hotspot_cluster_argmax_P_k_given_d": 1,
+      "top3_clusters_by_density": {
+        "1": 0.98851,
+        "3": 0.01078,
+        "0": 0.00072
+      }
+    },
+    "9": {
+      "n": 1370,
+      "entropy_cluster_mix_nat": 0.0732,
+      "hotspot_cluster_argmax_P_k_given_d": 1,
+      "top3_clusters_by_density": {
+        "1": 0.98832,
+        "6": 0.00876,
+        "4": 0.00146
+      }
+    }
+  }
+}

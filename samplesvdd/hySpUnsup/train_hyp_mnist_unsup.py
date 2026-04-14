@@ -1044,8 +1044,9 @@ def main():
 
     opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     eval_objective = "soft-boundary" if args.objective == "union-soft" else "one-class"
-    best_macro = -1e9
+    best_train_loss = float("inf")
     best_epoch = -1
+    macro_auc_at_best = float("nan")
     best_per_digit = {}
 
     for ep in range(1, args.svdd_n_epochs + 1):
@@ -1091,35 +1092,43 @@ def main():
             cpu_device = torch.device("cpu")
             R = update_radii_unsupervised(dist_sq_chunks, nu=args.nu, device=cpu_device).to(device)
 
+        epoch_loss_mean = float(np.mean(losses))
         print(
             f"[SVDD-H-UNSUP] {ep:03d}/{args.svdd_n_epochs} "
-            f"loss={np.mean(losses):.6f} rec={np.mean(rec_losses):.6f} svdd={np.mean(svdd_losses):.6f} "
+            f"loss={epoch_loss_mean:.6f} rec={np.mean(rec_losses):.6f} svdd={np.mean(svdd_losses):.6f} "
             f"overlap={np.mean(ov_losses):.6f} R_mean={float(R.mean().item()):.4f}"
         )
+
+        if epoch_loss_mean < best_train_loss:
+            best_train_loss = epoch_loss_mean
+            best_epoch = ep
+            macro_b, per_b = evaluate(
+                model, c_h, R, te_loader, device, eval_objective, args.curvature, auc_mode=args.auc_mode
+            )
+            macro_auc_at_best = macro_b
+            best_per_digit = per_b
+            torch.save(
+                {
+                    "model_state": model.state_dict(),
+                    "c_h": c_h.detach().cpu(),
+                    "R": R.detach().cpu(),
+                    "rep_dim": args.rep_dim,
+                    "z_dim": args.z_dim,
+                    "curvature": args.curvature,
+                    "objective": args.objective,
+                    "unsupervised": True,
+                    "best_training_loss": best_train_loss,
+                    "best_epoch": best_epoch,
+                },
+                os.path.join(args.xp_path, "checkpoint_best.pth"),
+            )
+            print(f"[BEST] min-loss checkpoint epoch={ep:03d} train_loss={best_train_loss:.6f} macro_auc(test)={macro_b}")
 
         if ep % args.eval_every == 0 or ep == args.svdd_n_epochs:
             macro, per_digit = evaluate(
                 model, c_h, R, te_loader, device, eval_objective, args.curvature, auc_mode=args.auc_mode
             )
-            print(f"[EVAL] epoch={ep:03d} macro_auc={macro}")
-            metric = macro if not np.isnan(macro) else -1e12
-            if metric > best_macro:
-                best_macro = macro
-                best_epoch = ep
-                best_per_digit = per_digit
-                torch.save(
-                    {
-                        "model_state": model.state_dict(),
-                        "c_h": c_h.detach().cpu(),
-                        "R": R.detach().cpu(),
-                        "rep_dim": args.rep_dim,
-                        "z_dim": args.z_dim,
-                        "curvature": args.curvature,
-                        "objective": args.objective,
-                        "unsupervised": True,
-                    },
-                    os.path.join(args.xp_path, "checkpoint_best.pth"),
-                )
+            print(f"[EVAL] epoch={ep:03d} macro_auc={macro} (monitoring; best ckpt = min train loss)")
         torch.save(
             {
                 "model_state": model.state_dict(),
@@ -1135,9 +1144,11 @@ def main():
         )
 
     out = {
+        "checkpoint_selection": "min_training_loss",
         "best_epoch": int(best_epoch),
-        "best_macro_auc": None if np.isnan(best_macro) else float(best_macro),
-        "per_digit_best_auc": best_per_digit,
+        "best_training_loss": None if best_epoch < 0 else float(best_train_loss),
+        "macro_auc_test_at_best_epoch": None if np.isnan(macro_auc_at_best) else float(macro_auc_at_best),
+        "per_digit_auc_at_best_epoch": best_per_digit,
         "curvature": args.curvature,
         "objective": args.objective,
         "unsupervised": True,

@@ -1,0 +1,77 @@
+{
+  "version": 2,
+  "best_epoch": 10,
+  "best_macro_auc": 0.5040227781144144,
+  "per_digit_best_auc": {
+    "0": 0.4859858683676298,
+    "1": 0.3310234065256862,
+    "2": 0.48674354710905515,
+    "3": 0.5745581327834702,
+    "4": 0.4908676581767587,
+    "5": 0.6326956701653963,
+    "6": 0.3609202054726467,
+    "7": 0.4269986961291084,
+    "8": 0.6167252011719278,
+    "9": 0.6337093952424645
+  },
+  "macro_auc_test_pruned_active_spheres": 0.5040126310680904,
+  "per_digit_auc_test_pruned_active_spheres": {
+    "0": 0.4872305537968623,
+    "1": 0.33309594090271083,
+    "2": 0.48812439585485096,
+    "3": 0.5755873151462824,
+    "4": 0.490281902975353,
+    "5": 0.6329431769016822,
+    "6": 0.3627098664847309,
+    "7": 0.4220933295663004,
+    "8": 0.6175780441318104,
+    "9": 0.6304817849203197
+  },
+  "curvature": 1.0,
+  "objective": "union-soft",
+  "unsupervised": true,
+  "ae_checkpoint": "D:\\Doctorate\\EngineCheck\\oasplTurbojet\\SampleSvDD\\samplesvdd\\hySpCheck\\runs\\ablate_mnist_full_t2_ae150\\ae_stage1_ep150.pth",
+  "prune": {
+    "train_argmin_counts": [
+      2433,
+      51201,
+      832,
+      168,
+      671,
+      22,
+      194,
+      12,
+      196,
+      109
+    ],
+    "silhouette_mean_per_cluster_euclidean_z": {
+      "0": 0.963617742061615,
+      "1": 0.969610333442688,
+      "2": 0.952403724193573,
+      "3": 0.9704834818840027,
+      "4": 0.9465553760528564,
+      "5": null,
+      "6": 0.9560593962669373,
+      "7": 0.0,
+      "8": null,
+      "9": null
+    },
+    "active_cluster_mask": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      false,
+      true,
+      false
+    ]
+  },
+  "union_test_metrics_active_spheres": {
+    "union_frac_inside": 0.943157746081062,
+    "union_margin_mean": -8.301111221313477,
+    "union_margin_std": 4.922019004821777
+  }
+}
