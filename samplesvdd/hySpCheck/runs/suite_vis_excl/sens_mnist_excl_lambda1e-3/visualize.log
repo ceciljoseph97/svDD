@@ -1,0 +1,18 @@
+
+=== Suite: sens_mnist_excl_lambda1e-3 ===
+[suite] t-SNE -> /home/josepcec/Downloads/OASPL/svDD/samplesvdd/hySpCheck/runs/suite_vis_excl/sens_mnist_excl_lambda1e-3/sens_mnist_excl_lambda1e-3/tsne_suite.png
+[suite] SKIP Poincare 3D: missing visualize_hyp_poincare_3d_interactive module.
+[suite] SKIP in-class extremes: missing visualize_inclass_extremes_mnist module.
+[suite] /home/josepcec/Downloads/OASPL/svDD/samplesvdd/hySpCheck/runs/suite_vis_excl/sens_mnist_excl_lambda1e-3/sens_mnist_excl_lambda1e-3/neural_activation/digit_0_neural_activation.png
+[suite] /home/josepcec/Downloads/OASPL/svDD/samplesvdd/hySpCheck/runs/suite_vis_excl/sens_mnist_excl_lambda1e-3/sens_mnist_excl_lambda1e-3/neural_activation/digit_1_neural_activation.png
+[suite] /home/josepcec/Downloads/OASPL/svDD/samplesvdd/hySpCheck/runs/suite_vis_excl/sens_mnist_excl_lambda1e-3/sens_mnist_excl_lambda1e-3/neural_activation/digit_2_neural_activation.png
+[suite] /home/josepcec/Downloads/OASPL/svDD/samplesvdd/hySpCheck/runs/suite_vis_excl/sens_mnist_excl_lambda1e-3/sens_mnist_excl_lambda1e-3/neural_activation/digit_3_neural_activation.png
+[suite] /home/josepcec/Downloads/OASPL/svDD/samplesvdd/hySpCheck/runs/suite_vis_excl/sens_mnist_excl_lambda1e-3/sens_mnist_excl_lambda1e-3/neural_activation/digit_4_neural_activation.png
+[suite] /home/josepcec/Downloads/OASPL/svDD/samplesvdd/hySpCheck/runs/suite_vis_excl/sens_mnist_excl_lambda1e-3/sens_mnist_excl_lambda1e-3/neural_activation/digit_5_neural_activation.png
+[suite] /home/josepcec/Downloads/OASPL/svDD/samplesvdd/hySpCheck/runs/suite_vis_excl/sens_mnist_excl_lambda1e-3/sens_mnist_excl_lambda1e-3/neural_activation/digit_6_neural_activation.png
+[suite] /home/josepcec/Downloads/OASPL/svDD/samplesvdd/hySpCheck/runs/suite_vis_excl/sens_mnist_excl_lambda1e-3/sens_mnist_excl_lambda1e-3/neural_activation/digit_7_neural_activation.png
+[suite] /home/josepcec/Downloads/OASPL/svDD/samplesvdd/hySpCheck/runs/suite_vis_excl/sens_mnist_excl_lambda1e-3/sens_mnist_excl_lambda1e-3/neural_activation/digit_8_neural_activation.png
+[suite] /home/josepcec/Downloads/OASPL/svDD/samplesvdd/hySpCheck/runs/suite_vis_excl/sens_mnist_excl_lambda1e-3/sens_mnist_excl_lambda1e-3/neural_activation/digit_9_neural_activation.png
+[suite] /home/josepcec/Downloads/OASPL/svDD/samplesvdd/hySpCheck/runs/suite_vis_excl/sens_mnist_excl_lambda1e-3/sens_mnist_excl_lambda1e-3/neural_activation/neural_activation_overview.png
+
+[suite] Done. Outputs under /home/josepcec/Downloads/OASPL/svDD/samplesvdd/hySpCheck/runs/suite_vis_excl/sens_mnist_excl_lambda1e-3

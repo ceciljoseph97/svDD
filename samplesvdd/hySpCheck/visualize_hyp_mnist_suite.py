@@ -45,12 +45,21 @@ from hyperbolic_ops import hyp_distance, proj_ball
 from mnist_local import MNISTDigitsProcessedRawDataset, MNIST_LeNet_SVDDIAE, preprocess_batch_by_digit_minmax
 
 # Optional: in-class extremes
-from visualize_hyp_poincare_3d_interactive import geodesic_mds_3d
-from visualize_inclass_extremes_mnist import (
-    _run_all_classes,
-    _save_combined_grid_mnist,
-    _save_row_png,
-)
+try:
+    from visualize_hyp_poincare_3d_interactive import geodesic_mds_3d
+except ImportError:
+    geodesic_mds_3d = None
+
+try:
+    from visualize_inclass_extremes_mnist import (
+        _run_all_classes,
+        _save_combined_grid_mnist,
+        _save_row_png,
+    )
+except ImportError:
+    _run_all_classes = None
+    _save_combined_grid_mnist = None
+    _save_row_png = None
 
 
 class ScaledRawDataset(Dataset):
@@ -220,6 +229,10 @@ def run_poincare_html(
     n_workers: int,
     seed: int,
 ):
+    if geodesic_mds_3d is None:
+        print("[suite] SKIP Poincare 3D: missing visualize_hyp_poincare_3d_interactive module.")
+        return
+
     import plotly.express as px
     import plotly.graph_objects as go
 
@@ -503,29 +516,32 @@ def run_one_checkpoint(
             args.n_jobs_dataloader,
             args.seed,
         )
-        best_img, worst_img, best_s, worst_s = _run_all_classes(
-            mnist_processed_dir,
-            str(ckpt_path),
-            device,
-            args.train_fraction,
-            args.split,
-            args.batch_size,
-            args.n_jobs_dataloader,
-        )
-        inc_dir = out_dir / "inclass_extremes"
-        inc_dir.mkdir(exist_ok=True)
-        for k in range(10):
-            op = inc_dir / f"inclass_extremes_mnist_k{k}.png"
-            _save_row_png(best_img[k], worst_img[k], float(best_s[k]), float(worst_s[k]), k, str(op), args.dpi)
-        _save_combined_grid_mnist(
-            best_img,
-            worst_img,
-            best_s,
-            worst_s,
-            str(inc_dir / "inclass_extremes_mnist_combined.png"),
-            args.dpi,
-        )
-        print(f"[suite] in-class extremes -> {inc_dir}")
+        if _run_all_classes is None or _save_combined_grid_mnist is None or _save_row_png is None:
+            print("[suite] SKIP in-class extremes: missing visualize_inclass_extremes_mnist module.")
+        else:
+            best_img, worst_img, best_s, worst_s = _run_all_classes(
+                mnist_processed_dir,
+                str(ckpt_path),
+                device,
+                args.train_fraction,
+                args.split,
+                args.batch_size,
+                args.n_jobs_dataloader,
+            )
+            inc_dir = out_dir / "inclass_extremes"
+            inc_dir.mkdir(exist_ok=True)
+            for k in range(10):
+                op = inc_dir / f"inclass_extremes_mnist_k{k}.png"
+                _save_row_png(best_img[k], worst_img[k], float(best_s[k]), float(worst_s[k]), k, str(op), args.dpi)
+            _save_combined_grid_mnist(
+                best_img,
+                worst_img,
+                best_s,
+                worst_s,
+                str(inc_dir / "inclass_extremes_mnist_combined.png"),
+                args.dpi,
+            )
+            print(f"[suite] in-class extremes -> {inc_dir}")
 
     run_neural_activation_maps(
         model,

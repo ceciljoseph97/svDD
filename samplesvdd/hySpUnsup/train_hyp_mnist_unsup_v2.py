@@ -68,9 +68,10 @@ def prune_spheres_from_train(
     silhouette_seed: int,
 ) -> tuple[np.ndarray, dict]:
     """
-    Returns active_mask length 10 (True = keep sphere in union scoring).
+    Returns active_mask length K (True = keep sphere in union scoring).
     """
-    counts = np.zeros(10, dtype=np.int64)
+    n_spheres = int(R.numel())
+    counts = np.zeros(n_spheres, dtype=np.int64)
     z_parts = []
     k_parts = []
 
@@ -83,7 +84,7 @@ def prune_spheres_from_train(
         b = torch.arange(z_all.size(0), device=device)
         z_pick = z_all[b, k_near].cpu().numpy()
         kn = k_near.cpu().numpy()
-        for kk in range(10):
+        for kk in range(n_spheres):
             counts[kk] += int(np.sum(kn == kk))
         z_parts.append(z_pick)
         k_parts.append(kn)
@@ -91,12 +92,12 @@ def prune_spheres_from_train(
     Z = np.concatenate(z_parts, axis=0)
     K = np.concatenate(k_parts, axis=0)
 
-    active = np.ones(10, dtype=bool)
+    active = np.ones(n_spheres, dtype=bool)
     if min_cluster_members > 0:
         active &= counts >= min_cluster_members
 
-    sil_detail: dict = {str(k): None for k in range(10)}
-    if silhouette_min is not None and Z.shape[0] >= 10:
+    sil_detail: dict = {str(k): None for k in range(n_spheres)}
+    if silhouette_min is not None and Z.shape[0] >= n_spheres:
         rng = np.random.RandomState(silhouette_seed)
         if Z.shape[0] > silhouette_max_samples:
             sub = rng.choice(Z.shape[0], silhouette_max_samples, replace=False)
@@ -106,7 +107,7 @@ def prune_spheres_from_train(
         if len(np.unique(Ks)) >= 2:
             try:
                 sil = silhouette_samples(Zs, Ks, metric="euclidean")
-                for k in range(10):
+                for k in range(n_spheres):
                     m = Ks == k
                     if np.sum(m) >= 2:
                         sil_detail[str(k)] = float(np.mean(sil[m]))
@@ -114,7 +115,7 @@ def prune_spheres_from_train(
                         sil_detail[str(k)] = float(sil[m][0])
             except Exception as e:
                 sil_detail["_error"] = str(e)
-        for k in range(10):
+        for k in range(n_spheres):
             if sil_detail[str(k)] is not None and sil_detail[str(k)] < silhouette_min:
                 active[k] = False
 
@@ -161,6 +162,28 @@ def union_metrics_test(
     }
 
 
+def _parse_digit_list(s: str, arg_name: str) -> list[int]:
+    v = s.strip().lower()
+    if v == "all":
+        return list(range(10))
+    out = []
+    for tok in s.split(","):
+        tok = tok.strip()
+        if not tok:
+            continue
+        try:
+            d = int(tok)
+        except ValueError as e:
+            raise SystemExit(f"{arg_name}: expected comma-separated ints in [0..9] or 'all' (got {s!r})") from e
+        if d < 0 or d > 9:
+            raise SystemExit(f"{arg_name}: digit out of range [0..9]: {d}")
+        out.append(d)
+    if not out:
+        raise SystemExit(f"{arg_name}: no digits parsed from {s!r}")
+    out = sorted(set(out))
+    return out
+
+
 def main():
     default_ae = _HYSP_CHECK / "runs" / "ae_pretrain_mnist" / "ae_stage1.pth"
     p = argparse.ArgumentParser("hySpUnsup v2: unsup multi-sphere + prune + union metrics")
@@ -168,6 +191,12 @@ def main():
     p.add_argument("--xp_path", type=str, default="hySpUnsup/runs/mnist_unsup_hyp_v2")
     p.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     p.add_argument("--digits", type=str, default="all")
+    p.add_argument(
+        "--normal_digits",
+        type=str,
+        default=None,
+        help="Normal classes used for training only. Example: '0,1,2'. If omitted, uses --digits.",
+    )
     p.add_argument("--train_fraction", type=float, default=0.8)
     p.add_argument("--batch_size", type=int, default=256)
     p.add_argument("--n_jobs_dataloader", type=int, default=0)
@@ -176,6 +205,7 @@ def main():
     p.add_argument("--max_samples_per_class", type=int, default=None)
     p.add_argument("--rep_dim", type=int, default=32)
     p.add_argument("--z_dim", type=int, default=16)
+    p.add_argument("--n_spheres", type=int, default=10)
     p.add_argument("--curvature", type=float, default=1.0)
     p.add_argument("--ae_n_epochs", type=int, default=10)
     p.add_argument("--svdd_n_epochs", type=int, default=25)
@@ -242,15 +272,19 @@ def main():
     )
 
     args = p.parse_args()
+    if args.n_spheres < 1:
+        raise SystemExit("--n_spheres must be >= 1")
     os.makedirs(args.xp_path, exist_ok=True)
     device = torch.device(args.device)
-    digits = list(range(10)) if args.digits == "all" else [int(x) for x in args.digits.split(",") if x.strip()]
+    test_digits = _parse_digit_list(args.digits, "--digits")
+    train_digits = _parse_digit_list(args.normal_digits, "--normal_digits") if args.normal_digits else list(test_digits)
+    print(f"[DATA] train normal digits={train_digits} | test digits={test_digits}")
 
     tr_raw = MNISTDigitsProcessedRawDataset(
         root_dir=args.mnist_processed_dir,
         split="train",
         train_fraction=args.train_fraction,
-        digits=digits,
+        digits=train_digits,
         max_samples=args.max_train_samples,
         max_samples_per_class=args.max_samples_per_class,
     )
@@ -258,7 +292,7 @@ def main():
         root_dir=args.mnist_processed_dir,
         split="test",
         train_fraction=args.train_fraction,
-        digits=digits,
+        digits=test_digits,
         max_samples=args.max_test_samples,
         max_samples_per_class=args.max_samples_per_class,
     )
@@ -269,7 +303,7 @@ def main():
 
     backbone = MNIST_LeNet_SVDDIAE(rep_dim=args.rep_dim)
     model = HyperbolicMultiSphereSVDD(
-        backbone=backbone, rep_dim=args.rep_dim, z_dim=args.z_dim, n_digits=10, c=args.curvature
+        backbone=backbone, rep_dim=args.rep_dim, z_dim=args.z_dim, n_digits=args.n_spheres, c=args.curvature
     ).to(device)
 
     if args.skip_ae_pretrain:
@@ -278,7 +312,28 @@ def main():
             raise SystemExit(f"--skip_ae_pretrain requires a valid --ae_stage1_checkpoint_path (got {ckpt_path!r})")
         ae_ckpt = torch.load(ckpt_path, map_location="cpu")
         model_state = ae_ckpt["model_state"] if isinstance(ae_ckpt, dict) and "model_state" in ae_ckpt else ae_ckpt
-        model.load_state_dict(model_state, strict=True)
+        missing, unexpected = model.load_state_dict(model_state, strict=False)
+        missing = list(missing)
+        unexpected = list(unexpected)
+        bad_missing = [k for k in missing if not k.startswith("proj_heads.")]
+        bad_unexpected = [k for k in unexpected if not k.startswith("proj_heads.")]
+        if bad_missing or bad_unexpected:
+            raise RuntimeError(
+                "Checkpoint/model mismatch outside projection heads.\n"
+                f"missing(non-proj)={bad_missing}\n"
+                f"unexpected(non-proj)={bad_unexpected}"
+            )
+        n_proj_missing = len([k for k in missing if k.startswith("proj_heads.")])
+        n_proj_unexpected = len([k for k in unexpected if k.startswith("proj_heads.")])
+        if n_proj_missing or n_proj_unexpected:
+            print(
+                "[AE] loaded with non-strict projection-head match "
+                f"(missing proj params={n_proj_missing}, unexpected proj params={n_proj_unexpected})."
+            )
+            print(
+                "[AE] This is expected when checkpoint head-count != --n_spheres; "
+                "extra heads stay randomly initialized."
+            )
         print(f"[AE] skipped pretrain; loaded: {ckpt_path}")
     else:
         opt_ae = optim.Adam(model.parameters(), lr=args.ae_lr, weight_decay=args.weight_decay)
@@ -301,7 +356,8 @@ def main():
             print(f"[AE] saved stage-1 checkpoint: {out_path}")
 
     c_h = init_centers_h_unsupervised(model, tr_loader, device=device)
-    R = torch.zeros((10,), device=device)
+    R = torch.zeros((args.n_spheres,), device=device)
+    full_active_mask = np.ones(args.n_spheres, dtype=bool)
 
     opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     eval_objective = "soft-boundary" if args.objective == "union-soft" else "one-class"
@@ -316,7 +372,7 @@ def main():
         rec_losses = []
         svdd_losses = []
         ov_losses = []
-        dist_sq_chunks = [[] for _ in range(10)]
+        dist_sq_chunks = [[] for _ in range(args.n_spheres)]
 
         for x_scaled, _digits_b in tr_loader:
             x_scaled = x_scaled.to(device)
@@ -344,7 +400,7 @@ def main():
 
             if args.objective == "union-soft" and ep > args.warm_up_n_epochs:
                 with torch.no_grad():
-                    for k in range(10):
+                    for k in range(args.n_spheres):
                         m = k_idx == k
                         if torch.any(m):
                             dist_sq_chunks[k].append(dist_sq_all[m, k].detach().cpu())
@@ -363,7 +419,15 @@ def main():
             best_train_loss = epoch_loss_mean
             best_epoch = ep
             macro_b, per_b = evaluate(
-                model, c_h, R, te_loader, device, eval_objective, args.curvature, auc_mode=args.auc_mode
+                model,
+                c_h,
+                R,
+                te_loader,
+                device,
+                eval_objective,
+                args.curvature,
+                active_cluster_mask=full_active_mask,
+                auc_mode=args.auc_mode,
             )
             macro_auc_at_best = macro_b
             best_per_digit = per_b
@@ -375,6 +439,7 @@ def main():
                     "rep_dim": args.rep_dim,
                     "z_dim": args.z_dim,
                     "curvature": args.curvature,
+                    "n_spheres": args.n_spheres,
                     "objective": args.objective,
                     "unsupervised": True,
                     "version": 2,
@@ -389,7 +454,15 @@ def main():
 
         if ep % args.eval_every == 0 or ep == args.svdd_n_epochs:
             macro, per_digit = evaluate(
-                model, c_h, R, te_loader, device, eval_objective, args.curvature, auc_mode=args.auc_mode
+                model,
+                c_h,
+                R,
+                te_loader,
+                device,
+                eval_objective,
+                args.curvature,
+                active_cluster_mask=full_active_mask,
+                auc_mode=args.auc_mode,
             )
             print(f"[EVAL] epoch={ep:03d} macro_auc={macro} (auc_mode={args.auc_mode}; monitoring)")
         torch.save(
@@ -400,6 +473,7 @@ def main():
                 "rep_dim": args.rep_dim,
                 "z_dim": args.z_dim,
                 "curvature": args.curvature,
+                "n_spheres": args.n_spheres,
                 "objective": args.objective,
                 "unsupervised": True,
                 "version": 2,
@@ -440,7 +514,9 @@ def main():
         auc_mode=args.auc_mode,
     )
 
-    print(f"[v2 PRUNE] active spheres: {active_mask.astype(np.int32).tolist()}  ({int(active_mask.sum())}/10)")
+    print(
+        f"[v2 PRUNE] active spheres: {active_mask.astype(np.int32).tolist()}  ({int(active_mask.sum())}/{args.n_spheres})"
+    )
     print(f"[v2 UNION test] {union_m}")
     print(f"[v2 EVAL test + active_mask] macro_auc={macro_pruned} (auc_mode={args.auc_mode})")
 
@@ -454,6 +530,9 @@ def main():
         "macro_auc_test_pruned_active_spheres": None if np.isnan(macro_pruned) else float(macro_pruned),
         "per_digit_auc_test_pruned_active_spheres": per_pruned,
         "curvature": args.curvature,
+        "n_spheres": args.n_spheres,
+        "train_normal_digits": train_digits,
+        "test_digits": test_digits,
         "objective": args.objective,
         "unsupervised": True,
         "ae_checkpoint": args.ae_stage1_checkpoint_path if args.skip_ae_pretrain else None,
@@ -472,6 +551,9 @@ def main():
             "rep_dim": args.rep_dim,
             "z_dim": args.z_dim,
             "curvature": args.curvature,
+            "n_spheres": args.n_spheres,
+            "train_normal_digits": train_digits,
+            "test_digits": test_digits,
             "objective": args.objective,
             "unsupervised": True,
             "version": 2,
@@ -481,7 +563,16 @@ def main():
         os.path.join(args.xp_path, "checkpoint_v2.pth"),
     )
 
-    if (
+    if args.n_spheres != 10 and (
+        (not args.skip_tsne)
+        or (args.export_cluster_samples > 0)
+        or args.export_hotspot_analysis
+        or args.export_cluster_neural_hotspots
+    ):
+        print(
+            "[v2] Skipping t-SNE/cluster exports: current helper visualizations are implemented for n_spheres=10 only."
+        )
+    elif (
         (not args.skip_tsne)
         or (args.export_cluster_samples > 0)
         or args.export_hotspot_analysis
