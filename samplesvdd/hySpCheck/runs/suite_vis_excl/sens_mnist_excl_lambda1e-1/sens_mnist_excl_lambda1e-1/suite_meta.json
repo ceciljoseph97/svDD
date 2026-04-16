@@ -1,0 +1,9 @@
+{
+  "tag": "sens_mnist_excl_lambda1e-1",
+  "checkpoint": "/home/josepcec/Downloads/OASPL/svDD/samplesvdd/hySpCheck/runs/sens_mnist_excl_lambda1e-1/checkpoint_best.pth",
+  "has_svdd": true,
+  "rep_dim": 32,
+  "z_dim": 16,
+  "curvature": 1.0,
+  "objective": "soft-boundary"
+}

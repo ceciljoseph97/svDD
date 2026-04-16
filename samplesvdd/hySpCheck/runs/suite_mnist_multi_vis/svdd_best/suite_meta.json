@@ -1,9 +1,0 @@
-{
-  "tag": "svdd_best",
-  "checkpoint": "D:\\Doctorate\\EngineCheck\\oasplTurbojet\\SampleSvDD\\samplesvdd\\hySpCheck\\runs\\ablate_mnist_full_t2_from_ae150\\checkpoint_best.pth",
-  "has_svdd": true,
-  "rep_dim": 32,
-  "z_dim": 16,
-  "curvature": 1.0,
-  "objective": "soft-boundary"
-}

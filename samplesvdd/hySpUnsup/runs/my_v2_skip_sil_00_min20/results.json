@@ -1,0 +1,104 @@
+{
+  "version": 2,
+  "checkpoint_selection": "min_training_loss",
+  "best_epoch": 10,
+  "best_training_loss": 0.9217611456026226,
+  "macro_auc_test_at_best_epoch": 0.4881851143449225,
+  "per_digit_auc_at_best_epoch": {
+    "0": 0.7108909552569813,
+    "1": 0.049441324638793,
+    "2": 0.3715409394450667,
+    "3": 0.9372306631775187,
+    "4": 0.429856341353925,
+    "5": 0.299315121864924,
+    "6": 0.8403073043663067,
+    "7": 0.09613526607832755,
+    "8": 0.6235789593601031,
+    "9": 0.5235542679072795
+  },
+  "macro_auc_test_pruned_active_spheres": 0.429856341353925,
+  "per_digit_auc_test_pruned_active_spheres": {
+    "0": null,
+    "1": null,
+    "2": null,
+    "3": null,
+    "4": 0.429856341353925,
+    "5": null,
+    "6": null,
+    "7": null,
+    "8": null,
+    "9": null
+  },
+  "curvature": 1.0,
+  "n_spheres": 10,
+  "train_normal_digits": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "test_digits": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "objective": "union-soft",
+  "unsupervised": true,
+  "ae_checkpoint": null,
+  "prune": {
+    "train_argmin_counts": [
+      0,
+      0,
+      0,
+      0,
+      56040,
+      0,
+      0,
+      0,
+      0,
+      5
+    ],
+    "silhouette_mean_per_cluster_euclidean_z": {
+      "0": null,
+      "1": null,
+      "2": null,
+      "3": null,
+      "4": null,
+      "5": null,
+      "6": null,
+      "7": null,
+      "8": null,
+      "9": null
+    },
+    "active_cluster_mask": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "union_test_metrics_active_spheres": {
+    "union_frac_inside": 0.9355069867431028,
+    "union_margin_mean": -0.6335068941116333,
+    "union_margin_std": 0.3921568691730499
+  }
+}

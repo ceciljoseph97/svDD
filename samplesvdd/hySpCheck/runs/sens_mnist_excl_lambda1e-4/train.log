@@ -1,0 +1,143 @@
+[AE] skipped pretrain; loaded stage-1 checkpoint: /home/josepcec/Downloads/OASPL/svDD/samplesvdd/hySpCheck/runs/ablate_mnist_full_t2_ae150/ae_stage1_ep150.pth
+[SVDD-H] 001/100 loss=1.791641 rec=1.724926 svdd=1334.304280 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 002/100 loss=1.782100 rec=1.722181 svdd=1198.375385 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 003/100 loss=1.775393 rec=1.720645 svdd=1094.969253 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 004/100 loss=1.772226 rec=1.721801 svdd=1008.497327 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[SVDD-H] 005/100 loss=1.768307 rec=1.721613 svdd=933.883596 excl=0.000000 overlap=0.000000 R_mean=0.0000
+[EVAL] epoch=005 macro_auc=0.8157118722357357
+[SVDD-H] 006/100 loss=1.761698 rec=1.718172 svdd=870.522490 excl=0.000000 overlap=0.000000 R_mean=10.1029
+[SVDD-H] 007/100 loss=1.846175 rec=1.715863 svdd=106.747065 excl=3.777575 overlap=12.459705 R_mean=10.0061
+[SVDD-H] 008/100 loss=1.844920 rec=1.716757 svdd=106.262484 excl=1.901934 overlap=12.266042 R_mean=10.0321
+[SVDD-H] 009/100 loss=1.846930 rec=1.718279 svdd=105.828578 excl=1.788321 overlap=12.318021 R_mean=10.0348
+[SVDD-H] 010/100 loss=1.845368 rec=1.716696 svdd=105.455086 excl=1.635629 overlap=12.323537 R_mean=10.0308
+[EVAL] epoch=010 macro_auc=0.9030044641252593
+[SVDD-H] 011/100 loss=1.845361 rec=1.716799 svdd=105.037304 excl=1.534378 overlap=12.315596 R_mean=10.0169
+[SVDD-H] 012/100 loss=1.842993 rec=1.714748 svdd=104.484141 excl=1.435885 overlap=12.287696 R_mean=10.0003
+[SVDD-H] 013/100 loss=1.839303 rec=1.711428 svdd=103.893008 excl=1.355882 overlap=12.254484 R_mean=9.9758
+[SVDD-H] 014/100 loss=1.841239 rec=1.713894 svdd=103.259858 excl=1.270430 overlap=12.205540 R_mean=9.9474
+[SVDD-H] 015/100 loss=1.838843 rec=1.712109 svdd=102.510273 excl=1.210299 overlap=12.148778 R_mean=9.9164
+[EVAL] epoch=015 macro_auc=0.9254708777921881
+[SVDD-H] 016/100 loss=1.838972 rec=1.712902 svdd=101.753573 excl=1.150904 overlap=12.086695 R_mean=9.8822
+[SVDD-H] 017/100 loss=1.836329 rec=1.710990 svdd=100.922165 excl=1.098054 overlap=12.018278 R_mean=9.8425
+[SVDD-H] 018/100 loss=1.835712 rec=1.711215 svdd=100.064337 excl=1.038261 overlap=11.938935 R_mean=9.8033
+[SVDD-H] 019/100 loss=1.834378 rec=1.710716 svdd=99.135059 excl=1.008091 overlap=11.860419 R_mean=9.7592
+[SVDD-H] 020/100 loss=1.833425 rec=1.710696 svdd=98.201014 excl=0.952368 overlap=11.772376 R_mean=9.7111
+[EVAL] epoch=020 macro_auc=0.9420015401700377
+[SVDD-H] 021/100 loss=1.830837 rec=1.709123 svdd=97.196433 excl=0.917848 overlap=11.676188 R_mean=9.6656
+[SVDD-H] 022/100 loss=1.832575 rec=1.711827 svdd=96.222152 excl=0.868989 overlap=11.585070 R_mean=9.6215
+[SVDD-H] 023/100 loss=1.827033 rec=1.707217 svdd=95.274128 excl=0.828662 overlap=11.496954 R_mean=9.5756
+[SVDD-H] 024/100 loss=1.828099 rec=1.709252 svdd=94.338516 excl=0.793635 overlap=11.405103 R_mean=9.5301
+[SVDD-H] 025/100 loss=1.825528 rec=1.707642 svdd=93.401035 excl=0.752564 overlap=11.314098 R_mean=9.4846
+[EVAL] epoch=025 macro_auc=0.9543773238995513
+[SVDD-H] 026/100 loss=1.824692 rec=1.707765 svdd=92.467266 excl=0.729251 overlap=11.223083 R_mean=9.4382
+[SVDD-H] 027/100 loss=1.822679 rec=1.706730 svdd=91.539347 excl=0.690751 overlap=11.130337 R_mean=9.3940
+[SVDD-H] 028/100 loss=1.820868 rec=1.705850 svdd=90.661296 excl=0.663106 overlap=11.041825 R_mean=9.3486
+[SVDD-H] 029/100 loss=1.823786 rec=1.709724 svdd=89.752133 excl=0.631281 overlap=10.951141 R_mean=9.3066
+[SVDD-H] 030/100 loss=1.819884 rec=1.706705 svdd=88.908057 excl=0.616132 overlap=10.867180 R_mean=9.2650
+[EVAL] epoch=030 macro_auc=0.9628397918073375
+[SVDD-H] 031/100 loss=1.818306 rec=1.706004 svdd=88.107420 excl=0.587130 overlap=10.783854 R_mean=9.2236
+[SVDD-H] 032/100 loss=1.817631 rec=1.706197 svdd=87.325750 excl=0.560358 overlap=10.701177 R_mean=9.1874
+[SVDD-H] 033/100 loss=1.816470 rec=1.705800 svdd=86.594722 excl=0.541734 overlap=10.628619 R_mean=9.1504
+[SVDD-H] 034/100 loss=1.817703 rec=1.707811 svdd=85.873515 excl=0.514644 overlap=10.554731 R_mean=9.1135
+[SVDD-H] 035/100 loss=1.815030 rec=1.705912 svdd=85.178030 excl=0.498761 overlap=10.480950 R_mean=9.0810
+[EVAL] epoch=035 macro_auc=0.9665061446744463
+[SVDD-H] 036/100 loss=1.814933 rec=1.706499 svdd=84.543950 excl=0.482045 overlap=10.415879 R_mean=9.0470
+[SVDD-H] 037/100 loss=1.810844 rec=1.703124 svdd=83.889867 excl=0.460387 overlap=10.347887 R_mean=9.0148
+[SVDD-H] 038/100 loss=1.810984 rec=1.703940 svdd=83.292955 excl=0.444933 overlap=10.283521 R_mean=8.9856
+[SVDD-H] 039/100 loss=1.809975 rec=1.703544 svdd=82.719079 excl=0.433273 overlap=10.225191 R_mean=8.9556
+[SVDD-H] 040/100 loss=1.810123 rec=1.704322 svdd=82.174521 excl=0.411972 overlap=10.165193 R_mean=8.9284
+[EVAL] epoch=040 macro_auc=0.9712390835726341
+[SVDD-H] 041/100 loss=1.807723 rec=1.702493 svdd=81.646334 excl=0.402085 overlap=10.110765 R_mean=8.9023
+[SVDD-H] 042/100 loss=1.808627 rec=1.703946 svdd=81.139353 excl=0.388804 overlap=10.058483 R_mean=8.8783
+[SVDD-H] 043/100 loss=1.805684 rec=1.701506 svdd=80.682240 excl=0.377824 overlap=10.010565 R_mean=8.8529
+[SVDD-H] 044/100 loss=1.806434 rec=1.702791 svdd=80.201678 excl=0.364673 overlap=9.959651 R_mean=8.8292
+[SVDD-H] 045/100 loss=1.805716 rec=1.702571 svdd=79.743633 excl=0.355770 overlap=9.912275 R_mean=8.8063
+[EVAL] epoch=045 macro_auc=0.9757742175234416
+[SVDD-H] 046/100 loss=1.802837 rec=1.700172 svdd=79.300063 excl=0.345776 overlap=9.866512 R_mean=8.7842
+[SVDD-H] 047/100 loss=1.803513 rec=1.701310 svdd=78.895980 excl=0.337565 overlap=9.822396 R_mean=8.7631
+[SVDD-H] 048/100 loss=1.803929 rec=1.702171 svdd=78.481737 excl=0.329301 overlap=9.780022 R_mean=8.7434
+[SVDD-H] 049/100 loss=1.800593 rec=1.699248 svdd=78.112709 excl=0.319733 overlap=9.740678 R_mean=8.7237
+[SVDD-H] 050/100 loss=1.802638 rec=1.701707 svdd=77.742735 excl=0.311836 overlap=9.701347 R_mean=8.7048
+[EVAL] epoch=050 macro_auc=0.9776925726412777
+[SVDD-H] 051/100 loss=1.798975 rec=1.698441 svdd=77.376283 excl=0.305829 overlap=9.663462 R_mean=8.6868
+[SVDD-H] 052/100 loss=1.799155 rec=1.698999 svdd=77.037519 excl=0.298311 overlap=9.627522 R_mean=8.6681
+[SVDD-H] 053/100 loss=1.797945 rec=1.698181 svdd=76.691736 excl=0.288667 overlap=9.590060 R_mean=8.6511
+[SVDD-H] 054/100 loss=1.797158 rec=1.697750 svdd=76.372762 excl=0.284024 overlap=9.556133 R_mean=8.6344
+[SVDD-H] 055/100 loss=1.798173 rec=1.699115 svdd=76.059717 excl=0.280239 overlap=9.522688 R_mean=8.6189
+[EVAL] epoch=055 macro_auc=0.9793978750223008
+[SVDD-H] 056/100 loss=1.798033 rec=1.699300 svdd=75.762888 excl=0.274677 overlap=9.491757 R_mean=8.6040
+[SVDD-H] 057/100 loss=1.797701 rec=1.699281 svdd=75.497804 excl=0.266934 overlap=9.461918 R_mean=8.5911
+[SVDD-H] 058/100 loss=1.794062 rec=1.695912 svdd=75.231884 excl=0.264996 overlap=9.436173 R_mean=8.5773
+[SVDD-H] 059/100 loss=1.796402 rec=1.698543 svdd=74.982978 excl=0.256914 overlap=9.408424 R_mean=8.5655
+[SVDD-H] 060/100 loss=1.792655 rec=1.695043 svdd=74.750239 excl=0.252587 overlap=9.384886 R_mean=8.5536
+[EVAL] epoch=060 macro_auc=0.9814442007906446
+[SVDD-H] 061/100 loss=1.799076 rec=1.701714 svdd=74.521614 excl=0.249423 overlap=9.361102 R_mean=8.5432
+[SVDD-H] 062/100 loss=1.792176 rec=1.695032 svdd=74.310112 excl=0.246734 overlap=9.340305 R_mean=8.5319
+[SVDD-H] 063/100 loss=1.792515 rec=1.695609 svdd=74.093953 excl=0.244342 overlap=9.317671 R_mean=8.5214
+[SVDD-H] 064/100 loss=1.791435 rec=1.694749 svdd=73.898792 excl=0.240009 overlap=9.296630 R_mean=8.5117
+[SVDD-H] 065/100 loss=1.790380 rec=1.693898 svdd=73.712036 excl=0.237546 overlap=9.277269 R_mean=8.5019
+[EVAL] epoch=065 macro_auc=0.9837642501581719
+[SVDD-H] 066/100 loss=1.794791 rec=1.698516 svdd=73.520434 excl=0.232179 overlap=9.257613 R_mean=8.4933
+[SVDD-H] 067/100 loss=1.790020 rec=1.693925 svdd=73.344765 excl=0.233778 overlap=9.240476 R_mean=8.4842
+[SVDD-H] 068/100 loss=1.788973 rec=1.693068 svdd=73.163163 excl=0.229950 overlap=9.222338 R_mean=8.4756
+[SVDD-H] 069/100 loss=1.790291 rec=1.694568 svdd=73.008058 excl=0.225435 overlap=9.205070 R_mean=8.4670
+[SVDD-H] 070/100 loss=1.790590 rec=1.695046 svdd=72.843586 excl=0.224768 overlap=9.187942 R_mean=8.4591
+[EVAL] epoch=070 macro_auc=0.9857278925772585
+[SVDD-H] 071/100 loss=1.787491 rec=1.692114 svdd=72.688071 excl=0.223596 overlap=9.172060 R_mean=8.4513
+[SVDD-H] 072/100 loss=1.789080 rec=1.693867 svdd=72.538659 excl=0.219320 overlap=9.156433 R_mean=8.4443
+[SVDD-H] 073/100 loss=1.787916 rec=1.692850 svdd=72.390717 excl=0.221876 overlap=9.142444 R_mean=8.4368
+[SVDD-H] 074/100 loss=1.787515 rec=1.692605 svdd=72.251733 excl=0.218395 overlap=9.127567 R_mean=8.4298
+[SVDD-H] 075/100 loss=1.789869 rec=1.695107 svdd=72.121375 excl=0.215332 overlap=9.113444 R_mean=8.4231
+[EVAL] epoch=075 macro_auc=0.9859440001192817
+[SVDD-H] 076/100 loss=1.785687 rec=1.691065 svdd=71.985664 excl=0.216584 overlap=9.100181 R_mean=8.4164
+[SVDD-H] 077/100 loss=1.788998 rec=1.694516 svdd=71.849463 excl=0.215869 overlap=9.086784 R_mean=8.4095
+[SVDD-H] 078/100 loss=1.785401 rec=1.691064 svdd=71.721249 excl=0.214745 overlap=9.073013 R_mean=8.4033
+[SVDD-H] 079/100 loss=1.786910 rec=1.692703 svdd=71.600471 excl=0.214958 overlap=9.060592 R_mean=8.3968
+[SVDD-H] 080/100 loss=1.781461 rec=1.687390 svdd=71.473462 excl=0.213499 overlap=9.047591 R_mean=8.3905
+[EVAL] epoch=080 macro_auc=0.9877944001424052
+[SVDD-H] 081/100 loss=1.784058 rec=1.690121 svdd=71.356832 excl=0.210604 overlap=9.034829 R_mean=8.3844
+[SVDD-H] 082/100 loss=1.785206 rec=1.691396 svdd=71.234494 excl=0.210685 overlap=9.022784 R_mean=8.3782
+[SVDD-H] 083/100 loss=1.788714 rec=1.695033 svdd=71.124104 excl=0.208034 overlap=9.010389 R_mean=8.3725
+[SVDD-H] 084/100 loss=1.784815 rec=1.691255 svdd=71.008903 excl=0.209508 overlap=8.998871 R_mean=8.3667
+[SVDD-H] 085/100 loss=1.782040 rec=1.688600 svdd=70.896606 excl=0.208386 overlap=8.987390 R_mean=8.3613
+[EVAL] epoch=085 macro_auc=0.9888783761653516
+[SVDD-H] 086/100 loss=1.783820 rec=1.690495 svdd=70.790849 excl=0.208149 overlap=8.976471 R_mean=8.3556
+[SVDD-H] 087/100 loss=1.782128 rec=1.688921 svdd=70.683932 excl=0.208173 overlap=8.965170 R_mean=8.3502
+[SVDD-H] 088/100 loss=1.780276 rec=1.687184 svdd=70.578052 excl=0.205695 overlap=8.954308 R_mean=8.3448
+[SVDD-H] 089/100 loss=1.782616 rec=1.689637 svdd=70.473669 excl=0.206143 overlap=8.943439 R_mean=8.3396
+[SVDD-H] 090/100 loss=1.778334 rec=1.685464 svdd=70.370837 excl=0.206295 overlap=8.933077 R_mean=8.3342
+[EVAL] epoch=090 macro_auc=0.9894702591539186
+[SVDD-H] 091/100 loss=1.781494 rec=1.688736 svdd=70.270075 excl=0.206532 overlap=8.922383 R_mean=8.3293
+[SVDD-H] 092/100 loss=1.781192 rec=1.688538 svdd=70.170779 excl=0.204793 overlap=8.912437 R_mean=8.3241
+[SVDD-H] 093/100 loss=1.779106 rec=1.686561 svdd=70.072361 excl=0.203727 overlap=8.902090 R_mean=8.3192
+[SVDD-H] 094/100 loss=1.781428 rec=1.688986 svdd=69.969449 excl=0.205794 overlap=8.892235 R_mean=8.3139
+[SVDD-H] 095/100 loss=1.777768 rec=1.685438 svdd=69.870769 excl=0.204692 overlap=8.881654 R_mean=8.3088
+[EVAL] epoch=095 macro_auc=0.9906549897474919
+[SVDD-H] 096/100 loss=1.775733 rec=1.683508 svdd=69.775575 excl=0.205232 overlap=8.871563 R_mean=8.3041
+[SVDD-H] 097/100 loss=1.777855 rec=1.685729 svdd=69.681696 excl=0.202767 overlap=8.862164 R_mean=8.2993
+[SVDD-H] 098/100 loss=1.777955 rec=1.685929 svdd=69.587956 excl=0.204193 overlap=8.852604 R_mean=8.2947
+[SVDD-H] 099/100 loss=1.776226 rec=1.684298 svdd=69.498773 excl=0.202026 overlap=8.843243 R_mean=8.2899
+[SVDD-H] 100/100 loss=1.777855 rec=1.686026 svdd=69.411932 excl=0.201431 overlap=8.833748 R_mean=8.2850
+[EVAL] epoch=100 macro_auc=0.9904700731996282
+{
+  "best_epoch": 95,
+  "best_macro_auc": 0.9906549897474919,
+  "per_digit_best_auc": {
+    "0": 0.9994900210061608,
+    "1": 0.9998529344073648,
+    "2": 0.9881505720888687,
+    "3": 0.9877497192874608,
+    "4": 0.9951480220465064,
+    "5": 0.9819807886257009,
+    "6": 0.9976399024667637,
+    "7": 0.9928089392118975,
+    "8": 0.9756890806977141,
+    "9": 0.9880399176364812
+  },
+  "curvature": 1.0,
+  "objective": "soft-boundary",
+  "lambda_excl": 0.0001,
+  "margin_excl": 0.1,
+  "lambda_overlap": 0.01,
+  "margin_overlap": 0.05
+}
