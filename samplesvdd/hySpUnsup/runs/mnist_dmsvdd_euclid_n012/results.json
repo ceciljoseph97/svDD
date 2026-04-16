@@ -1,0 +1,21 @@
+{
+  "best_epoch": 5,
+  "best_macro_auc": 0.5080683297833483,
+  "per_digit_best": {
+    "0": 0.6424694135090987,
+    "1": 0.1254540082188258,
+    "2": 0.7562815676221203,
+    "3": null,
+    "4": null,
+    "5": null,
+    "6": null,
+    "7": null,
+    "8": null,
+    "9": null
+  },
+  "n_cluster": 3,
+  "curvature": 1.0,
+  "nu": 0.1,
+  "lambda_svdd": 1.0,
+  "dmsvdd_hyp": true
+}

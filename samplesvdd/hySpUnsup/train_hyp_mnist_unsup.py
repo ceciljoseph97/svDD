@@ -339,6 +339,12 @@ def plot_tsne_unsupervised(
     Z2 = tsne.fit_transform(Z)
 
     summary = _cluster_class_summary(Kassign, D)
+    counts = np.array([int(summary["per_cluster"][str(k)]["n"]) for k in range(10)], dtype=np.int64)
+    total_n = int(counts.sum())
+    frac = (counts / max(total_n, 1)).astype(np.float64)
+    dominant_cluster = int(np.argmax(frac)) if total_n > 0 else -1
+    dominant_frac = float(frac[dominant_cluster]) if dominant_cluster >= 0 else 0.0
+    collapse_detected = bool(dominant_frac >= 0.9)
     pruned_ids = [int(k) for k in range(10) if not active_cluster_mask[k]]
     summary["pruning"] = {
         "active_cluster_mask": [bool(active_cluster_mask[k]) for k in range(10)],
@@ -348,6 +354,11 @@ def plot_tsne_unsupervised(
         if (not bool(np.all(active_cluster_mask)))
         else "all_heads_argmin",
         "note": "per_cluster uses nearest active sphere (pruned heads excluded from argmin). Hull/legend grey-out uses active_cluster_mask.",
+    }
+    summary["assignment_diagnostics"] = {
+        "dominant_cluster": dominant_cluster,
+        "dominant_cluster_fraction": dominant_frac,
+        "collapse_detected_ge_0p9": collapse_detected,
     }
     out_abs = os.path.abspath(out_png)
     _par = os.path.dirname(out_abs)
@@ -379,7 +390,8 @@ def plot_tsne_unsupervised(
 
     fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(16, 7))
 
-    _draw_cluster_hulls_masked(ax0, Z2, Kassign, cluster_colors, active_cluster_mask, alpha_fill=0.22)
+    if not collapse_detected:
+        _draw_cluster_hulls_masked(ax0, Z2, Kassign, cluster_colors, active_cluster_mask, alpha_fill=0.22)
     for k in range(10):
         m = Kassign == k
         if not np.any(m):
@@ -409,7 +421,12 @@ def plot_tsne_unsupervised(
         for j in range(10)
     ]
     ax0.legend(handles=leg_c, loc="best", fontsize=7, ncol=2, frameon=True)
-    ax0.set_title("t-SNE: nearest-sphere cluster (shaded hulls)")
+    if collapse_detected:
+        ax0.set_title(
+            f"t-SNE: nearest-sphere cluster (assignment collapse: k={dominant_cluster}, {dominant_frac*100:.1f}%)"
+        )
+    else:
+        ax0.set_title("t-SNE: nearest-sphere cluster (shaded hulls)")
     ax0.set_xlabel("t-SNE-1")
     ax0.set_ylabel("t-SNE-2")
 

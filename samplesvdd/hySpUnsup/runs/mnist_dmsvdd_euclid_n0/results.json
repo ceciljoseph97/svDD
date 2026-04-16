@@ -1,0 +1,10 @@
+{
+  "best_epoch": -1,
+  "best_macro_auc": null,
+  "per_digit_best": {},
+  "n_cluster": 3,
+  "curvature": 1.0,
+  "nu": 0.1,
+  "lambda_svdd": 1.0,
+  "dmsvdd_hyp": true
+}
