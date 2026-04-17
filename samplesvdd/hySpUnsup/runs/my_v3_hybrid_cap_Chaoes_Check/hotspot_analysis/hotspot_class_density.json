@@ -1,0 +1,803 @@
+{
+  "split": "test",
+  "nearest_sphere_assignment": "active_argmin",
+  "active_cluster_mask": [
+    true,
+    true,
+    true,
+    true,
+    false,
+    true,
+    true,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+    true,
+    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    true,
+    true,
+    true,
+    false
+  ],
+  "total_samples": 13955,
+  "counts_cluster_x_digit": [
+    [
+      1,
+      3,
+      67,
+      179,
+      0,
+      43,
+      16,
+      0,
+      8,
+      0
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      1
+    ],
+    [
+      121,
+      12,
+      83,
+      273,
+      108,
+      238,
+      330,
+      186,
+      100,
+      189
+    ],
+    [
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      10,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      16,
+      0,
+      44,
+      4,
+      72,
+      5,
+      8,
+      119,
+      1,
+      175
+    ],
+    [
+      116,
+      5,
+      268,
+      65,
+      405,
+      123,
+      76,
+      75,
+      175,
+      113
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      8,
+      0,
+      19,
+      17,
+      74,
+      4,
+      34,
+      8,
+      43,
+      30
+    ],
+    [
+      11,
+      432,
+      210,
+      72,
+      52,
+      19,
+      65,
+      509,
+      19,
+      103
+    ],
+    [
+      0,
+      357,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    [
+      8,
+      0,
+      9,
+      145,
+      110,
+      245,
+      66,
+      4,
+      379,
+      19
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      338,
+      1,
+      15,
+      4,
+      2,
+      0,
+      1,
+      1,
+      2
+    ],
+    [
+      53,
+      10,
+      35,
+      166,
+      3,
+      225,
+      95,
+      3,
+      35,
+      2
+    ],
+    [
+      0,
+      155,
+      2,
+      2,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    [
+      1,
+      0,
+      1,
+      0,
+      25,
+      1,
+      0,
+      1,
+      0,
+      48
+    ],
+    [
+      17,
+      253,
+      242,
+      205,
+      15,
+      36,
+      26,
+      17,
+      122,
+      21
+    ],
+    [
+      171,
+      6,
+      91,
+      53,
+      68,
+      146,
+      200,
+      17,
+      58,
+      49
+    ],
+    [
+      0,
+      0,
+      1,
+      0,
+      12,
+      0,
+      0,
+      5,
+      1,
+      61
+    ],
+    [
+      4,
+      1,
+      25,
+      113,
+      13,
+      36,
+      51,
+      0,
+      36,
+      2
+    ],
+    [
+      48,
+      0,
+      11,
+      4,
+      0,
+      4,
+      0,
+      5,
+      2,
+      0
+    ],
+    [
+      10,
+      3,
+      23,
+      23,
+      42,
+      3,
+      48,
+      8,
+      104,
+      36
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      3,
+      0,
+      2,
+      0,
+      4,
+      0,
+      0,
+      107,
+      1,
+      38
+    ],
+    [
+      180,
+      4,
+      109,
+      34,
+      160,
+      89,
+      100,
+      296,
+      169,
+      355
+    ],
+    [
+      609,
+      1,
+      162,
+      61,
+      184,
+      54,
+      268,
+      59,
+      83,
+      130
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  ],
+  "per_cluster": {
+    "0": {
+      "n": 317,
+      "entropy_digit_mix_nat": 1.228,
+      "hotspot_digit_argmax_P_d_given_k": 3,
+      "top3_digits_by_density": {
+        "3": 0.56467,
+        "2": 0.21136,
+        "5": 0.13565
+      }
+    },
+    "1": {
+      "n": 11,
+      "entropy_digit_mix_nat": 0.6002,
+      "hotspot_digit_argmax_P_d_given_k": 7,
+      "top3_digits_by_density": {
+        "7": 0.81818,
+        "0": 0.09091,
+        "9": 0.09091
+      }
+    },
+    "2": {
+      "n": 1640,
+      "entropy_digit_mix_nat": 2.1261,
+      "hotspot_digit_argmax_P_d_given_k": 6,
+      "top3_digits_by_density": {
+        "6": 0.20122,
+        "3": 0.16646,
+        "5": 0.14512
+      }
+    },
+    "3": {
+      "n": 11,
+      "entropy_digit_mix_nat": 0.3046,
+      "hotspot_digit_argmax_P_d_given_k": 8,
+      "top3_digits_by_density": {
+        "8": 0.90909,
+        "3": 0.09091,
+        "0": 0.0
+      }
+    },
+    "4": {
+      "n": 0,
+      "entropy_digit_mix_nat": -0.0,
+      "hotspot_digit_argmax_P_d_given_k": 0,
+      "top3_digits_by_density": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.0
+      }
+    },
+    "5": {
+      "n": 444,
+      "entropy_digit_mix_nat": 1.5427,
+      "hotspot_digit_argmax_P_d_given_k": 9,
+      "top3_digits_by_density": {
+        "9": 0.39414,
+        "7": 0.26802,
+        "4": 0.16216
+      }
+    },
+    "6": {
+      "n": 1421,
+      "entropy_digit_mix_nat": 2.0208,
+      "hotspot_digit_argmax_P_d_given_k": 4,
+      "top3_digits_by_density": {
+        "4": 0.28501,
+        "2": 0.1886,
+        "8": 0.12315
+      }
+    },
+    "7": {
+      "n": 0,
+      "entropy_digit_mix_nat": -0.0,
+      "hotspot_digit_argmax_P_d_given_k": 0,
+      "top3_digits_by_density": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.0
+      }
+    },
+    "8": {
+      "n": 0,
+      "entropy_digit_mix_nat": -0.0,
+      "hotspot_digit_argmax_P_d_given_k": 0,
+      "top3_digits_by_density": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.0
+      }
+    },
+    "9": {
+      "n": 0,
+      "entropy_digit_mix_nat": -0.0,
+      "hotspot_digit_argmax_P_d_given_k": 0,
+      "top3_digits_by_density": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.0
+      }
+    },
+    "10": {
+      "n": 237,
+      "entropy_digit_mix_nat": 1.9023,
+      "hotspot_digit_argmax_P_d_given_k": 4,
+      "top3_digits_by_density": {
+        "4": 0.31224,
+        "8": 0.18143,
+        "6": 0.14346
+      }
+    },
+    "11": {
+      "n": 1492,
+      "entropy_digit_mix_nat": 1.7334,
+      "hotspot_digit_argmax_P_d_given_k": 7,
+      "top3_digits_by_density": {
+        "7": 0.34115,
+        "1": 0.28954,
+        "2": 0.14075
+      }
+    },
+    "12": {
+      "n": 358,
+      "entropy_digit_mix_nat": 0.0192,
+      "hotspot_digit_argmax_P_d_given_k": 1,
+      "top3_digits_by_density": {
+        "1": 0.99721,
+        "6": 0.00279,
+        "0": 0.0
+      }
+    },
+    "13": {
+      "n": 985,
+      "entropy_digit_mix_nat": 1.6021,
+      "hotspot_digit_argmax_P_d_given_k": 8,
+      "top3_digits_by_density": {
+        "8": 0.38477,
+        "5": 0.24873,
+        "3": 0.14721
+      }
+    },
+    "14": {
+      "n": 0,
+      "entropy_digit_mix_nat": -0.0,
+      "hotspot_digit_argmax_P_d_given_k": 0,
+      "top3_digits_by_density": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.0
+      }
+    },
+    "15": {
+      "n": 364,
+      "entropy_digit_mix_nat": 0.3556,
+      "hotspot_digit_argmax_P_d_given_k": 1,
+      "top3_digits_by_density": {
+        "1": 0.92857,
+        "3": 0.04121,
+        "4": 0.01099
+      }
+    },
+    "16": {
+      "n": 627,
+      "entropy_digit_mix_nat": 1.672,
+      "hotspot_digit_argmax_P_d_given_k": 5,
+      "top3_digits_by_density": {
+        "5": 0.35885,
+        "3": 0.26475,
+        "6": 0.15152
+      }
+    },
+    "17": {
+      "n": 161,
+      "entropy_digit_mix_nat": 0.2087,
+      "hotspot_digit_argmax_P_d_given_k": 1,
+      "top3_digits_by_density": {
+        "1": 0.96273,
+        "2": 0.01242,
+        "3": 0.01242
+      }
+    },
+    "18": {
+      "n": 77,
+      "entropy_digit_mix_nat": 0.8855,
+      "hotspot_digit_argmax_P_d_given_k": 9,
+      "top3_digits_by_density": {
+        "9": 0.62338,
+        "4": 0.32468,
+        "0": 0.01299
+      }
+    },
+    "19": {
+      "n": 954,
+      "entropy_digit_mix_nat": 1.8081,
+      "hotspot_digit_argmax_P_d_given_k": 1,
+      "top3_digits_by_density": {
+        "1": 0.2652,
+        "2": 0.25367,
+        "3": 0.21488
+      }
+    },
+    "20": {
+      "n": 859,
+      "entropy_digit_mix_nat": 2.03,
+      "hotspot_digit_argmax_P_d_given_k": 6,
+      "top3_digits_by_density": {
+        "6": 0.23283,
+        "0": 0.19907,
+        "5": 0.16997
+      }
+    },
+    "21": {
+      "n": 80,
+      "entropy_digit_mix_nat": 0.7742,
+      "hotspot_digit_argmax_P_d_given_k": 9,
+      "top3_digits_by_density": {
+        "9": 0.7625,
+        "4": 0.15,
+        "7": 0.0625
+      }
+    },
+    "22": {
+      "n": 281,
+      "entropy_digit_mix_nat": 1.6758,
+      "hotspot_digit_argmax_P_d_given_k": 3,
+      "top3_digits_by_density": {
+        "3": 0.40214,
+        "6": 0.18149,
+        "5": 0.12811
+      }
+    },
+    "23": {
+      "n": 74,
+      "entropy_digit_mix_nat": 1.1592,
+      "hotspot_digit_argmax_P_d_given_k": 0,
+      "top3_digits_by_density": {
+        "0": 0.64865,
+        "2": 0.14865,
+        "7": 0.06757
+      }
+    },
+    "24": {
+      "n": 300,
+      "entropy_digit_mix_nat": 1.8861,
+      "hotspot_digit_argmax_P_d_given_k": 8,
+      "top3_digits_by_density": {
+        "8": 0.34667,
+        "6": 0.16,
+        "4": 0.14
+      }
+    },
+    "25": {
+      "n": 0,
+      "entropy_digit_mix_nat": -0.0,
+      "hotspot_digit_argmax_P_d_given_k": 0,
+      "top3_digits_by_density": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.0
+      }
+    },
+    "26": {
+      "n": 155,
+      "entropy_digit_mix_nat": 0.8599,
+      "hotspot_digit_argmax_P_d_given_k": 7,
+      "top3_digits_by_density": {
+        "7": 0.69032,
+        "9": 0.24516,
+        "4": 0.02581
+      }
+    },
+    "27": {
+      "n": 1496,
+      "entropy_digit_mix_nat": 2.0435,
+      "hotspot_digit_argmax_P_d_given_k": 9,
+      "top3_digits_by_density": {
+        "9": 0.2373,
+        "7": 0.19786,
+        "0": 0.12032
+      }
+    },
+    "28": {
+      "n": 1611,
+      "entropy_digit_mix_nat": 1.8643,
+      "hotspot_digit_argmax_P_d_given_k": 0,
+      "top3_digits_by_density": {
+        "0": 0.37803,
+        "6": 0.16636,
+        "4": 0.11421
+      }
+    },
+    "29": {
+      "n": 0,
+      "entropy_digit_mix_nat": -0.0,
+      "hotspot_digit_argmax_P_d_given_k": 0,
+      "top3_digits_by_density": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.0
+      }
+    }
+  },
+  "per_digit": {
+    "0": {
+      "n": 1378,
+      "entropy_cluster_mix_nat": 1.836,
+      "hotspot_cluster_argmax_P_k_given_d": 28,
+      "top3_clusters_by_density": {
+        "28": 0.44194,
+        "27": 0.13062,
+        "20": 0.12409
+      }
+    },
+    "1": {
+      "n": 1580,
+      "entropy_cluster_mix_nat": 1.6984,
+      "hotspot_cluster_argmax_P_k_given_d": 11,
+      "top3_clusters_by_density": {
+        "11": 0.27342,
+        "12": 0.22595,
+        "15": 0.21392
+      }
+    },
+    "2": {
+      "n": 1405,
+      "entropy_cluster_mix_nat": 2.3421,
+      "hotspot_cluster_argmax_P_k_given_d": 6,
+      "top3_clusters_by_density": {
+        "6": 0.19075,
+        "19": 0.17224,
+        "11": 0.14947
+      }
+    },
+    "3": {
+      "n": 1432,
+      "entropy_cluster_mix_nat": 2.386,
+      "hotspot_cluster_argmax_P_k_given_d": 2,
+      "top3_clusters_by_density": {
+        "2": 0.19064,
+        "19": 0.14316,
+        "0": 0.125
+      }
+    },
+    "4": {
+      "n": 1351,
+      "entropy_cluster_mix_nat": 2.2491,
+      "hotspot_cluster_argmax_P_k_given_d": 6,
+      "top3_clusters_by_density": {
+        "6": 0.29978,
+        "28": 0.1362,
+        "27": 0.11843
+      }
+    },
+    "5": {
+      "n": 1273,
+      "entropy_cluster_mix_nat": 2.198,
+      "hotspot_cluster_argmax_P_k_given_d": 13,
+      "top3_clusters_by_density": {
+        "13": 0.19246,
+        "2": 0.18696,
+        "16": 0.17675
+      }
+    },
+    "6": {
+      "n": 1385,
+      "entropy_cluster_mix_nat": 2.256,
+      "hotspot_cluster_argmax_P_k_given_d": 2,
+      "top3_clusters_by_density": {
+        "2": 0.23827,
+        "28": 0.1935,
+        "20": 0.1444
+      }
+    },
+    "7": {
+      "n": 1429,
+      "entropy_cluster_mix_nat": 1.9211,
+      "hotspot_cluster_argmax_P_k_given_d": 11,
+      "top3_clusters_by_density": {
+        "11": 0.35619,
+        "27": 0.20714,
+        "2": 0.13016
+      }
+    },
+    "8": {
+      "n": 1348,
+      "entropy_cluster_mix_nat": 2.2619,
+      "hotspot_cluster_argmax_P_k_given_d": 13,
+      "top3_clusters_by_density": {
+        "13": 0.28116,
+        "6": 0.12982,
+        "27": 0.12537
+      }
+    },
+    "9": {
+      "n": 1374,
+      "entropy_cluster_mix_nat": 2.3171,
+      "hotspot_cluster_argmax_P_k_given_d": 27,
+      "top3_clusters_by_density": {
+        "27": 0.25837,
+        "2": 0.13755,
+        "5": 0.12737
+      }
+    }
+  }
+}

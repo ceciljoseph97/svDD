@@ -1,0 +1,329 @@
+{
+  "split": "test",
+  "samples_per_cluster": 20,
+  "nearest_sphere_assignment": "active_argmin",
+  "active_cluster_mask": [
+    true,
+    true,
+    true,
+    false,
+    false,
+    true,
+    true,
+    true,
+    false,
+    false,
+    false,
+    true,
+    true,
+    false,
+    true,
+    false,
+    true,
+    true,
+    false,
+    true
+  ],
+  "clusters": {
+    "0": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 0
+    },
+    "1": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 0
+    },
+    "2": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 0
+    },
+    "3": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 0
+    },
+    "4": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 0
+    },
+    "5": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 4,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 4
+    },
+    "6": {
+      "digit_counts_exported": {
+        "0": 1,
+        "1": 1,
+        "2": 2,
+        "3": 1,
+        "4": 0,
+        "5": 0,
+        "6": 2,
+        "7": 6,
+        "8": 3,
+        "9": 4
+      },
+      "total_available_in_split": 9705
+    },
+    "7": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 7,
+        "2": 2,
+        "3": 0,
+        "4": 1,
+        "5": 0,
+        "6": 9,
+        "7": 1,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 68
+    },
+    "8": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 0
+    },
+    "9": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 0
+    },
+    "10": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 0
+    },
+    "11": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 1,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 1
+      },
+      "total_available_in_split": 2
+    },
+    "12": {
+      "digit_counts_exported": {
+        "0": 8,
+        "1": 1,
+        "2": 3,
+        "3": 0,
+        "4": 0,
+        "5": 5,
+        "6": 2,
+        "7": 0,
+        "8": 1,
+        "9": 0
+      },
+      "total_available_in_split": 749
+    },
+    "13": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 0
+    },
+    "14": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 0
+    },
+    "15": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 0
+    },
+    "16": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 0
+    },
+    "17": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 0
+    },
+    "18": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 0
+    },
+    "19": {
+      "digit_counts_exported": {
+        "0": 1,
+        "1": 0,
+        "2": 0,
+        "3": 4,
+        "4": 4,
+        "5": 4,
+        "6": 4,
+        "7": 0,
+        "8": 2,
+        "9": 1
+      },
+      "total_available_in_split": 3427
+    }
+  }
+}

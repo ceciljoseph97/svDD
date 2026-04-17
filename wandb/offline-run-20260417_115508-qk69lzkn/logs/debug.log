@@ -1,0 +1,9 @@
+2026-04-17 11:55:08,516 INFO    MainThread:2123284 [wandb_setup.py:_flush():81] Current SDK version is 0.24.2
+2026-04-17 11:55:08,516 INFO    MainThread:2123284 [wandb_setup.py:_flush():81] Configure stats pid to 2123284
+2026-04-17 11:55:08,516 INFO    MainThread:2123284 [wandb_setup.py:_flush():81] Loading settings from environment variables
+2026-04-17 11:55:08,516 INFO    MainThread:2123284 [wandb_init.py:setup_run_log_directory():717] Logging user logs to /home/josepcec/Downloads/OASPL/svDD/wandb/offline-run-20260417_115508-qk69lzkn/logs/debug.log
+2026-04-17 11:55:08,516 INFO    MainThread:2123284 [wandb_init.py:setup_run_log_directory():718] Logging internal logs to /home/josepcec/Downloads/OASPL/svDD/wandb/offline-run-20260417_115508-qk69lzkn/logs/debug-internal.log
+2026-04-17 11:55:08,516 INFO    MainThread:2123284 [wandb_init.py:init():844] calling init triggers
+2026-04-17 11:55:08,516 INFO    MainThread:2123284 [wandb_init.py:init():849] wandb.init called with sweep_config: {}
+config: {'run_dir': 'samplesvdd/hySpUnsup/runs/sensitivity_v3/chaos_0p0', 'replay_split': 'test', 'auc_mode': 'union', 'n_spheres': 30, 'curvature': 1.0, 'objective': 'union-soft', 'best_epoch': -1, '_wandb': {}}
+2026-04-17 11:55:08,516 INFO    MainThread:2123284 [wandb_init.py:init():892] starting backend

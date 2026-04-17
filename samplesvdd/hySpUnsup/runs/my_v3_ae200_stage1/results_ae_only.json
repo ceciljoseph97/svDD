@@ -1,0 +1,37 @@
+{
+  "mode": "ae_only",
+  "version": 2,
+  "ae_n_epochs": 200,
+  "ae_lr": 0.001,
+  "weight_decay": 1e-06,
+  "rep_dim": 32,
+  "z_dim": 16,
+  "n_spheres": 30,
+  "curvature": 1.0,
+  "train_normal_digits": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "test_digits": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "used_checkpoint_input": null,
+  "saved_checkpoint": "samplesvdd/hySpUnsup/runs/my_v3_ae200_stage1/ae_stage1_ep200.pth"
+}

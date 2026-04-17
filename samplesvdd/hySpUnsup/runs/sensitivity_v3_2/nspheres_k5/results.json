@@ -1,0 +1,573 @@
+{
+  "version": 2,
+  "checkpoint_selection": "min_training_loss",
+  "best_epoch": 20,
+  "best_training_loss": 0.6257703309734118,
+  "macro_auc_test_at_best_epoch": 0.5012324400698613,
+  "per_digit_auc_at_best_epoch": {
+    "0": 0.5748427422923845,
+    "1": 0.4196014831862933,
+    "2": 0.40863821581999404,
+    "3": 0.5374832096651658,
+    "4": 0.593675189411513,
+    "5": 0.46841240555578334,
+    "6": 0.365940739081361,
+    "7": 0.5207954299004887,
+    "8": 0.6195269678495698,
+    "9": 0.5034080179360596
+  },
+  "macro_auc_test_pruned_active_spheres": 0.4999296200322288,
+  "per_digit_auc_test_pruned_active_spheres": {
+    "0": 0.5717130805154617,
+    "1": 0.5158257000383583,
+    "2": 0.49655133203839447,
+    "3": 0.5830749075332673,
+    "4": 0.437142544716339,
+    "5": 0.4545546303790108,
+    "6": 0.2757515027757913,
+    "7": 0.43438574287525333,
+    "8": 0.772935482360019,
+    "9": 0.4573612770903931
+  },
+  "curvature": 1.0,
+  "n_spheres": 5,
+  "train_normal_digits": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "test_digits": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "objective": "union-soft",
+  "unsupervised": true,
+  "ae_checkpoint": "samplesvdd/hySpUnsup/runs/my_v3_ae200_stage1/ae_stage1_ep200.pth",
+  "prune": {
+    "train_argmin_counts": [
+      2,
+      0,
+      31,
+      1,
+      56011
+    ],
+    "silhouette_mean_per_cluster_euclidean_z": {
+      "0": null,
+      "1": null,
+      "2": null,
+      "3": null,
+      "4": null
+    },
+    "active_cluster_mask": [
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "split_overloaded": {
+    "enabled": true,
+    "max_cluster_fraction": 0.2,
+    "applied": true,
+    "n_train": 56045,
+    "cap_count": 11209,
+    "counts_before": [
+      0,
+      0,
+      0,
+      0,
+      56045
+    ],
+    "overloaded_clusters": [
+      4
+    ],
+    "spare_inactive_clusters": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "splits": [
+      {
+        "source_cluster": 4,
+        "source_count": 56045,
+        "groups_after_split": [
+          15072,
+          13624,
+          12104,
+          8911,
+          6334
+        ],
+        "new_clusters_activated": [
+          0,
+          1,
+          2,
+          3
+        ]
+      }
+    ],
+    "active_cluster_mask_after_split": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hybrid_rebalance": {
+    "enabled": true,
+    "lb_min_cluster_members": 50,
+    "ub_max_cluster_fraction": 0.2,
+    "max_iters": 4,
+    "hard_cap_enabled": true,
+    "chaos_factor": 0.15,
+    "iterations": [
+      {
+        "iter": 1,
+        "lb": {
+          "enabled": true,
+          "counts": [
+            0,
+            0,
+            0,
+            0,
+            56045
+          ],
+          "active_before": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "active_after": [
+            false,
+            false,
+            false,
+            false,
+            true
+          ],
+          "changed": true
+        },
+        "ub": {
+          "enabled": true,
+          "max_cluster_fraction": 0.2,
+          "applied": true,
+          "n_train": 56045,
+          "cap_count": 11209,
+          "counts_before": [
+            0,
+            0,
+            0,
+            0,
+            56045
+          ],
+          "overloaded_clusters": [
+            4
+          ],
+          "spare_inactive_clusters": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "splits": [
+            {
+              "source_cluster": 4,
+              "source_count": 56045,
+              "groups_after_split": [
+                15056,
+                13634,
+                12109,
+                8912,
+                6334
+              ],
+              "new_clusters_activated": [
+                0,
+                1,
+                2,
+                3
+              ]
+            }
+          ],
+          "active_cluster_mask_after_split": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "hard_cap": {
+          "enabled": true,
+          "max_cluster_fraction": 0.2,
+          "chaos_factor": 0.15,
+          "applied": true,
+          "n_train": 56045,
+          "cap_count": 11209,
+          "counts_before": [
+            0,
+            0,
+            0,
+            0,
+            56045
+          ],
+          "counts_after": [
+            11209,
+            11209,
+            11209,
+            11209,
+            11209
+          ],
+          "overflow_reassigned": 44836
+        },
+        "changed": true
+      },
+      {
+        "iter": 2,
+        "lb": {
+          "enabled": true,
+          "counts": [
+            0,
+            0,
+            0,
+            0,
+            56045
+          ],
+          "active_before": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "active_after": [
+            false,
+            false,
+            false,
+            false,
+            true
+          ],
+          "changed": true
+        },
+        "ub": {
+          "enabled": true,
+          "max_cluster_fraction": 0.2,
+          "applied": true,
+          "n_train": 56045,
+          "cap_count": 11209,
+          "counts_before": [
+            0,
+            0,
+            0,
+            0,
+            56045
+          ],
+          "overloaded_clusters": [
+            4
+          ],
+          "spare_inactive_clusters": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "splits": [
+            {
+              "source_cluster": 4,
+              "source_count": 56045,
+              "groups_after_split": [
+                15236,
+                13585,
+                11870,
+                8952,
+                6402
+              ],
+              "new_clusters_activated": [
+                0,
+                1,
+                2,
+                3
+              ]
+            }
+          ],
+          "active_cluster_mask_after_split": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "hard_cap": {
+          "enabled": true,
+          "max_cluster_fraction": 0.2,
+          "chaos_factor": 0.15,
+          "applied": true,
+          "n_train": 56045,
+          "cap_count": 11209,
+          "counts_before": [
+            0,
+            0,
+            0,
+            0,
+            56045
+          ],
+          "counts_after": [
+            11209,
+            11209,
+            11209,
+            11209,
+            11209
+          ],
+          "overflow_reassigned": 44836
+        },
+        "changed": true
+      },
+      {
+        "iter": 3,
+        "lb": {
+          "enabled": true,
+          "counts": [
+            0,
+            0,
+            0,
+            0,
+            56045
+          ],
+          "active_before": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "active_after": [
+            false,
+            false,
+            false,
+            false,
+            true
+          ],
+          "changed": true
+        },
+        "ub": {
+          "enabled": true,
+          "max_cluster_fraction": 0.2,
+          "applied": true,
+          "n_train": 56045,
+          "cap_count": 11209,
+          "counts_before": [
+            0,
+            0,
+            0,
+            0,
+            56045
+          ],
+          "overloaded_clusters": [
+            4
+          ],
+          "spare_inactive_clusters": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "splits": [
+            {
+              "source_cluster": 4,
+              "source_count": 56045,
+              "groups_after_split": [
+                15175,
+                13646,
+                12003,
+                8702,
+                6519
+              ],
+              "new_clusters_activated": [
+                0,
+                1,
+                2,
+                3
+              ]
+            }
+          ],
+          "active_cluster_mask_after_split": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "hard_cap": {
+          "enabled": true,
+          "max_cluster_fraction": 0.2,
+          "chaos_factor": 0.15,
+          "applied": true,
+          "n_train": 56045,
+          "cap_count": 11209,
+          "counts_before": [
+            0,
+            0,
+            0,
+            0,
+            56045
+          ],
+          "counts_after": [
+            11209,
+            11209,
+            11209,
+            11209,
+            11209
+          ],
+          "overflow_reassigned": 44836
+        },
+        "changed": true
+      },
+      {
+        "iter": 4,
+        "lb": {
+          "enabled": true,
+          "counts": [
+            0,
+            0,
+            0,
+            0,
+            56045
+          ],
+          "active_before": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "active_after": [
+            false,
+            false,
+            false,
+            false,
+            true
+          ],
+          "changed": true
+        },
+        "ub": {
+          "enabled": true,
+          "max_cluster_fraction": 0.2,
+          "applied": true,
+          "n_train": 56045,
+          "cap_count": 11209,
+          "counts_before": [
+            0,
+            0,
+            0,
+            0,
+            56045
+          ],
+          "overloaded_clusters": [
+            4
+          ],
+          "spare_inactive_clusters": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "splits": [
+            {
+              "source_cluster": 4,
+              "source_count": 56045,
+              "groups_after_split": [
+                15044,
+                13646,
+                12104,
+                8917,
+                6334
+              ],
+              "new_clusters_activated": [
+                0,
+                1,
+                2,
+                3
+              ]
+            }
+          ],
+          "active_cluster_mask_after_split": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "hard_cap": {
+          "enabled": true,
+          "max_cluster_fraction": 0.2,
+          "chaos_factor": 0.15,
+          "applied": true,
+          "n_train": 56045,
+          "cap_count": 11209,
+          "counts_before": [
+            0,
+            0,
+            0,
+            0,
+            56045
+          ],
+          "counts_after": [
+            11209,
+            11209,
+            11209,
+            11209,
+            11209
+          ],
+          "overflow_reassigned": 44836
+        },
+        "changed": true
+      }
+    ],
+    "applied": true,
+    "active_cluster_mask_after_hybrid": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "radii_recalibration": {
+    "nu": 0.05,
+    "active_cluster_mask": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "r_mean": 2.7146718502044678,
+    "r_min": 0.0,
+    "r_max": 13.573358535766602
+  },
+  "union_test_metrics_active_spheres": {
+    "union_frac_inside": 0.9486922250089573,
+    "union_margin_mean": -27.162879943847656,
+    "union_margin_std": 17.076343536376953
+  }
+}

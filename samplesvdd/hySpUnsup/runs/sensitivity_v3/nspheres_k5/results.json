@@ -1,0 +1,570 @@
+{
+  "version": 2,
+  "checkpoint_selection": "min_training_loss",
+  "best_epoch": 20,
+  "best_training_loss": 0.6270928295779991,
+  "macro_auc_test_at_best_epoch": 0.49824969239841865,
+  "per_digit_auc_at_best_epoch": {
+    "0": 0.5863061191824688,
+    "1": 0.5790371052295104,
+    "2": 0.4107627568019736,
+    "3": 0.4724348539469499,
+    "4": 0.5442870755726861,
+    "5": 0.37704957685695645,
+    "6": 0.5771199262469521,
+    "7": 0.5284266388612875,
+    "8": 0.45752327436196605,
+    "9": 0.44954959692343543
+  },
+  "macro_auc_test_pruned_active_spheres": 0.499695777147536,
+  "per_digit_auc_test_pruned_active_spheres": {
+    "0": 0.48765122087419,
+    "1": 0.5417098836465926,
+    "2": 0.26871628078433596,
+    "3": 0.19016091397415347,
+    "4": 0.5730622038848476,
+    "5": 0.3596264624304998,
+    "6": 0.7650024842829611,
+    "7": 0.6263281122640694,
+    "8": 0.542690562847309,
+    "9": 0.6420096464864012
+  },
+  "curvature": 1.0,
+  "n_spheres": 5,
+  "train_normal_digits": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "test_digits": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "objective": "union-soft",
+  "unsupervised": true,
+  "ae_checkpoint": "samplesvdd/hySpUnsup/runs/my_v3_ae200_stage1/ae_stage1_ep200.pth",
+  "prune": {
+    "train_argmin_counts": [
+      0,
+      0,
+      119,
+      55904,
+      22
+    ],
+    "silhouette_mean_per_cluster_euclidean_z": {
+      "0": null,
+      "1": null,
+      "2": null,
+      "3": null,
+      "4": null
+    },
+    "active_cluster_mask": [
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "split_overloaded": {
+    "enabled": true,
+    "max_cluster_fraction": 0.2,
+    "applied": true,
+    "n_train": 56045,
+    "cap_count": 11209,
+    "counts_before": [
+      0,
+      0,
+      119,
+      55926,
+      0
+    ],
+    "overloaded_clusters": [
+      3
+    ],
+    "spare_inactive_clusters": [
+      0,
+      1,
+      4
+    ],
+    "splits": [
+      {
+        "source_cluster": 3,
+        "source_count": 55926,
+        "groups_after_split": [
+          15738,
+          12558,
+          11023,
+          10925,
+          5682
+        ],
+        "new_clusters_activated": [
+          0,
+          1,
+          4
+        ]
+      }
+    ],
+    "active_cluster_mask_after_split": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hybrid_rebalance": {
+    "enabled": true,
+    "lb_min_cluster_members": 50,
+    "ub_max_cluster_fraction": 0.2,
+    "max_iters": 4,
+    "hard_cap_enabled": true,
+    "chaos_factor": 0.15,
+    "iterations": [
+      {
+        "iter": 1,
+        "lb": {
+          "enabled": true,
+          "counts": [
+            0,
+            0,
+            55484,
+            561,
+            0
+          ],
+          "active_before": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "active_after": [
+            false,
+            false,
+            true,
+            true,
+            false
+          ],
+          "changed": true
+        },
+        "ub": {
+          "enabled": true,
+          "max_cluster_fraction": 0.2,
+          "applied": true,
+          "n_train": 56045,
+          "cap_count": 11209,
+          "counts_before": [
+            0,
+            0,
+            55484,
+            561,
+            0
+          ],
+          "overloaded_clusters": [
+            2
+          ],
+          "spare_inactive_clusters": [
+            0,
+            1,
+            4
+          ],
+          "splits": [
+            {
+              "source_cluster": 2,
+              "source_count": 55484,
+              "groups_after_split": [
+                14536,
+                12340,
+                11862,
+                10757,
+                5989
+              ],
+              "new_clusters_activated": [
+                0,
+                1,
+                4
+              ]
+            }
+          ],
+          "active_cluster_mask_after_split": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "hard_cap": {
+          "enabled": true,
+          "max_cluster_fraction": 0.2,
+          "chaos_factor": 0.15,
+          "applied": true,
+          "n_train": 56045,
+          "cap_count": 11209,
+          "counts_before": [
+            0,
+            0,
+            17004,
+            39041,
+            0
+          ],
+          "counts_after": [
+            11209,
+            11209,
+            11209,
+            11209,
+            11209
+          ],
+          "overflow_reassigned": 33627
+        },
+        "changed": true
+      },
+      {
+        "iter": 2,
+        "lb": {
+          "enabled": true,
+          "counts": [
+            18699,
+            0,
+            11839,
+            25507,
+            0
+          ],
+          "active_before": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "active_after": [
+            true,
+            false,
+            true,
+            true,
+            false
+          ],
+          "changed": true
+        },
+        "ub": {
+          "enabled": true,
+          "max_cluster_fraction": 0.2,
+          "applied": true,
+          "n_train": 56045,
+          "cap_count": 11209,
+          "counts_before": [
+            18699,
+            0,
+            11839,
+            25507,
+            0
+          ],
+          "overloaded_clusters": [
+            0,
+            2,
+            3
+          ],
+          "spare_inactive_clusters": [
+            1,
+            4
+          ],
+          "splits": [
+            {
+              "source_cluster": 0,
+              "source_count": 18699,
+              "groups_after_split": [
+                12997,
+                5702
+              ],
+              "new_clusters_activated": [
+                1
+              ]
+            },
+            {
+              "source_cluster": 2,
+              "source_count": 11839,
+              "groups_after_split": [
+                7027,
+                4812
+              ],
+              "new_clusters_activated": [
+                4
+              ]
+            },
+            {
+              "source_cluster": 3,
+              "source_count": 25507,
+              "groups_after_split": [
+                25507
+              ],
+              "new_clusters_activated": []
+            }
+          ],
+          "active_cluster_mask_after_split": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "hard_cap": {
+          "enabled": true,
+          "max_cluster_fraction": 0.2,
+          "chaos_factor": 0.15,
+          "applied": true,
+          "n_train": 56045,
+          "cap_count": 11209,
+          "counts_before": [
+            26971,
+            0,
+            3913,
+            25161,
+            0
+          ],
+          "counts_after": [
+            11209,
+            11209,
+            11209,
+            11209,
+            11209
+          ],
+          "overflow_reassigned": 29714
+        },
+        "changed": true
+      },
+      {
+        "iter": 3,
+        "lb": {
+          "enabled": true,
+          "counts": [
+            8415,
+            0,
+            15573,
+            32057,
+            0
+          ],
+          "active_before": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "active_after": [
+            true,
+            false,
+            true,
+            true,
+            false
+          ],
+          "changed": true
+        },
+        "ub": {
+          "enabled": true,
+          "max_cluster_fraction": 0.2,
+          "applied": true,
+          "n_train": 56045,
+          "cap_count": 11209,
+          "counts_before": [
+            8415,
+            0,
+            15573,
+            32057,
+            0
+          ],
+          "overloaded_clusters": [
+            2,
+            3
+          ],
+          "spare_inactive_clusters": [
+            1,
+            4
+          ],
+          "splits": [
+            {
+              "source_cluster": 2,
+              "source_count": 15573,
+              "groups_after_split": [
+                10291,
+                5282
+              ],
+              "new_clusters_activated": [
+                1
+              ]
+            },
+            {
+              "source_cluster": 3,
+              "source_count": 32057,
+              "groups_after_split": [
+                15367,
+                9161,
+                7529
+              ],
+              "new_clusters_activated": [
+                4
+              ]
+            }
+          ],
+          "active_cluster_mask_after_split": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "hard_cap": {
+          "enabled": true,
+          "max_cluster_fraction": 0.2,
+          "chaos_factor": 0.15,
+          "applied": true,
+          "n_train": 56045,
+          "cap_count": 11209,
+          "counts_before": [
+            6871,
+            0,
+            30714,
+            18460,
+            0
+          ],
+          "counts_after": [
+            11209,
+            11209,
+            11209,
+            11209,
+            11209
+          ],
+          "overflow_reassigned": 26756
+        },
+        "changed": true
+      },
+      {
+        "iter": 4,
+        "lb": {
+          "enabled": true,
+          "counts": [
+            45295,
+            0,
+            2268,
+            8482,
+            0
+          ],
+          "active_before": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "active_after": [
+            true,
+            false,
+            true,
+            true,
+            false
+          ],
+          "changed": true
+        },
+        "ub": {
+          "enabled": true,
+          "max_cluster_fraction": 0.2,
+          "applied": true,
+          "n_train": 56045,
+          "cap_count": 11209,
+          "counts_before": [
+            45295,
+            0,
+            2268,
+            8482,
+            0
+          ],
+          "overloaded_clusters": [
+            0
+          ],
+          "spare_inactive_clusters": [
+            1,
+            4
+          ],
+          "splits": [
+            {
+              "source_cluster": 0,
+              "source_count": 45295,
+              "groups_after_split": [
+                12405,
+                10879,
+                10086,
+                7275,
+                4650
+              ],
+              "new_clusters_activated": [
+                1,
+                4
+              ]
+            }
+          ],
+          "active_cluster_mask_after_split": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "hard_cap": {
+          "enabled": true,
+          "max_cluster_fraction": 0.2,
+          "chaos_factor": 0.15,
+          "applied": true,
+          "n_train": 56045,
+          "cap_count": 11209,
+          "counts_before": [
+            18365,
+            0,
+            7454,
+            30226,
+            0
+          ],
+          "counts_after": [
+            11209,
+            11209,
+            11209,
+            11209,
+            11209
+          ],
+          "overflow_reassigned": 26173
+        },
+        "changed": true
+      }
+    ],
+    "applied": true,
+    "active_cluster_mask_after_hybrid": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "union_test_metrics_active_spheres": {
+    "union_frac_inside": 0.0,
+    "union_margin_mean": 109.4019546508789,
+    "union_margin_std": 3.499974012374878
+  }
+}

@@ -236,14 +236,16 @@ def nearest_sphere_assignment(
 
 def _draw_cluster_hulls(ax, Z2: np.ndarray, cluster_ids: np.ndarray, base_colors: np.ndarray, alpha_fill: float = 0.18):
     """Shade approximate cluster regions in t-SNE space (convex hull per cluster)."""
-    _draw_cluster_hulls_masked(ax, Z2, cluster_ids, base_colors, np.ones(10, dtype=bool), alpha_fill)
+    n_clusters = int(base_colors.shape[0])
+    _draw_cluster_hulls_masked(ax, Z2, cluster_ids, base_colors, np.ones(n_clusters, dtype=bool), alpha_fill)
 
 
 def _draw_cluster_hulls_masked(
     ax, Z2: np.ndarray, cluster_ids: np.ndarray, base_colors: np.ndarray, active: np.ndarray, alpha_fill: float = 0.18
 ):
     """Same as _draw_cluster_hulls but skip hulls for inactive (pruned) cluster indices."""
-    for k in range(10):
+    n_clusters = int(base_colors.shape[0])
+    for k in range(n_clusters):
         if not active[k]:
             continue
         m = cluster_ids == k
@@ -281,13 +283,19 @@ def plot_tsne_unsupervised(
     t-SNE on per-sample hyperbolic embedding from the *nearest* sphere (argmin_k d(z^k, c_k)).
     If active_cluster_mask has False entries, assignment is argmin over **active** k only (pruned heads ignored).
     Cluster id = k_near (unsupervised). Saves dual panel: (1) clusters + shaded hulls, (2) true digit + in/out union.
-    If active_cluster_mask (length 10) is False for k, hull for k is skipped (v2 pruned clusters).
     """
-    if active_cluster_mask is None:
-        active_cluster_mask = np.ones(10, dtype=bool)
     model.eval()
     c_h = c_h.to(device)
     R = R.to(device)
+    n_clusters = int(c_h.size(0))
+    if active_cluster_mask is None:
+        active_cluster_mask = np.ones(n_clusters, dtype=bool)
+    else:
+        active_cluster_mask = np.asarray(active_cluster_mask, dtype=bool).reshape(-1)
+        if active_cluster_mask.shape[0] != n_clusters:
+            raise ValueError(
+                f"active_cluster_mask length mismatch: got {active_cluster_mask.shape[0]}, expected {n_clusters}"
+            )
     n = min(max_samples, len(dataset))
     rng = np.random.RandomState(seed)
     idx = rng.choice(len(dataset), size=n, replace=False).tolist()
@@ -310,16 +318,12 @@ def plot_tsne_unsupervised(
         zs.append(z_pick.cpu())
         digits_list.append(digits.cpu())
         cluster_list.append(k_near.cpu())
-        use_union_inside = (eval_objective == "soft-boundary") or (not np.all(active_cluster_mask))
-        if use_union_inside:
-            margin = dist_sq - (R.unsqueeze(0) ** 2)
-            am = torch.as_tensor(active_cluster_mask, device=dist_sq.device, dtype=torch.bool)
-            margin = margin.masked_fill(~am.unsqueeze(0), float("inf"))
-            inside = margin.min(dim=1).values <= 0
-        else:
-            dist_near = dist_sq[b_idx, k_near]
-            R_near = R[k_near]
-            inside = dist_near <= (R_near**2)
+        # In/Out is defined by membership in ANY active sphere (union criterion):
+        # inside if min_k_active (d_k^2 - R_k^2) <= 0, else outside all active spheres.
+        margin = dist_sq - (R.unsqueeze(0) ** 2)
+        am = torch.as_tensor(active_cluster_mask, device=dist_sq.device, dtype=torch.bool)
+        margin = margin.masked_fill(~am.unsqueeze(0), float("inf"))
+        inside = margin.min(dim=1).values <= 0
         inside_list.append(inside.cpu())
 
     Z = torch.cat(zs, dim=0).numpy()
@@ -338,16 +342,16 @@ def plot_tsne_unsupervised(
         tsne = TSNE(n_components=2, random_state=seed, perplexity=perplexity, max_iter=n_iter_eff)
     Z2 = tsne.fit_transform(Z)
 
-    summary = _cluster_class_summary(Kassign, D)
-    counts = np.array([int(summary["per_cluster"][str(k)]["n"]) for k in range(10)], dtype=np.int64)
+    summary = _cluster_class_summary(Kassign, D, n_clusters=n_clusters, n_classes=10)
+    counts = np.array([int(summary["per_cluster"][str(k)]["n"]) for k in range(n_clusters)], dtype=np.int64)
     total_n = int(counts.sum())
     frac = (counts / max(total_n, 1)).astype(np.float64)
     dominant_cluster = int(np.argmax(frac)) if total_n > 0 else -1
     dominant_frac = float(frac[dominant_cluster]) if dominant_cluster >= 0 else 0.0
     collapse_detected = bool(dominant_frac >= 0.9)
-    pruned_ids = [int(k) for k in range(10) if not active_cluster_mask[k]]
+    pruned_ids = [int(k) for k in range(n_clusters) if not active_cluster_mask[k]]
     summary["pruning"] = {
-        "active_cluster_mask": [bool(active_cluster_mask[k]) for k in range(10)],
+        "active_cluster_mask": [bool(active_cluster_mask[k]) for k in range(n_clusters)],
         "pruned_cluster_ids": pruned_ids,
         "n_active_spheres": int(np.sum(active_cluster_mask)),
         "nearest_sphere_assignment": "active_argmin"
@@ -372,7 +376,7 @@ def plot_tsne_unsupervised(
     print("[t-SNE] cluster x class density (rows=nearest-sphere cluster, cols=digit)")
     hdr = "clu\\d " + " ".join(f"{d:>4}" for d in range(10))
     print(hdr)
-    for c in range(10):
+    for c in range(n_clusters):
         row = summary["per_cluster"][str(c)]
         n_c = row["n"]
         if n_c == 0:
@@ -382,17 +386,19 @@ def plot_tsne_unsupervised(
         print(f"{c:>4}  " + " ".join(parts) + f"   n={n_c}  H={row['entropy_nat']}")
 
     try:
-        cmap10 = plt.colormaps["tab10"]
+        cmap_name = "tab20" if n_clusters > 10 else "tab10"
+        cmap = plt.colormaps[cmap_name]
     except AttributeError:
-        cmap10 = plt.cm.get_cmap("tab10")
-    cluster_colors = np.array([cmap10(i / 10.0)[:3] for i in range(10)])
+        cmap_name = "tab20" if n_clusters > 10 else "tab10"
+        cmap = plt.cm.get_cmap(cmap_name)
+    cluster_colors = np.array([cmap(i / max(n_clusters, 1))[:3] for i in range(n_clusters)])
     digit_colors = plt.cm.tab10(np.linspace(0, 1, 10))
 
     fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(16, 7))
 
     if not collapse_detected:
         _draw_cluster_hulls_masked(ax0, Z2, Kassign, cluster_colors, active_cluster_mask, alpha_fill=0.22)
-    for k in range(10):
+    for k in range(n_clusters):
         m = Kassign == k
         if not np.any(m):
             continue
@@ -418,7 +424,7 @@ def plot_tsne_unsupervised(
             markersize=7,
             label=f"cluster {j}" + ("" if active_cluster_mask[j] else " (pruned)"),
         )
-        for j in range(10)
+        for j in range(n_clusters)
     ]
     ax0.legend(handles=leg_c, loc="best", fontsize=7, ncol=2, frameon=True)
     if collapse_detected:
@@ -442,13 +448,13 @@ def plot_tsne_unsupervised(
             ax1.scatter(Z2[m_out, 0], Z2[m_out, 1], s=12, marker="x", color=digit_colors[k], alpha=0.85)
     leg_digits = [Line2D([0], [0], marker="o", color=digit_colors[j], linestyle="None", markersize=6, label=f"{j}") for j in range(10)]
     leg_state = [
-        Line2D([0], [0], marker="o", color="gray", linestyle="None", markersize=6, label="in union"),
-        Line2D([0], [0], marker="x", color="gray", linestyle="None", markersize=6, label="outside"),
+        Line2D([0], [0], marker="o", color="gray", linestyle="None", markersize=6, label="inside any cluster"),
+        Line2D([0], [0], marker="x", color="gray", linestyle="None", markersize=6, label="outside all clusters"),
     ]
     leg1 = ax1.legend(handles=leg_state, loc="lower right", fontsize=9, frameon=True)
     leg2 = ax1.legend(handles=leg_digits, loc="upper left", fontsize=8, frameon=True, ncol=2)
     ax1.add_artist(leg1)
-    ax1.set_title("Same embedding, true digit (eval) + union in/out")
+    ax1.set_title("Same embedding, true digit (eval) + inside/outside cluster union")
     ax1.set_xlabel("t-SNE-1")
     ax1.set_ylabel("t-SNE-2")
     ax0.set_aspect("equal", adjustable="datalim")
@@ -483,6 +489,7 @@ def export_cluster_sample_images(
     model.eval()
     c_h = c_h.to(device)
     R = R.to(device)
+    n_clusters = int(c_h.size(0))
     dl = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=0)
 
     buckets: dict[int, list[tuple[np.ndarray, int]]] = defaultdict(list)
@@ -502,7 +509,7 @@ def export_cluster_sample_images(
 
     rng = np.random.RandomState(seed)
     picked_per_k: dict[int, list[tuple[np.ndarray, int]]] = {}
-    for k in range(10):
+    for k in range(n_clusters):
         items = buckets[k]
         if len(items) > samples_per_cluster:
             idx = rng.choice(len(items), samples_per_cluster, replace=False)
@@ -521,7 +528,7 @@ def export_cluster_sample_images(
         else [bool(x) for x in np.asarray(active_cluster_mask).reshape(-1).tolist()],
         "clusters": {},
     }
-    for k in range(10):
+    for k in range(n_clusters):
         picked = picked_per_k[k]
         dc = {str(d): 0 for d in range(10)}
         for _, d in picked:
@@ -533,7 +540,7 @@ def export_cluster_sample_images(
     with open(os.path.join(out_dir, "cluster_export_meta.json"), "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2)
 
-    for k in range(10):
+    for k in range(n_clusters):
         picked = picked_per_k[k]
         if not picked:
             continue
@@ -554,8 +561,10 @@ def export_cluster_sample_images(
         plt.close()
         print(f"[export] {out_p}")
 
-    fig, axes = plt.subplots(10, samples_per_cluster, figsize=(1.9 * samples_per_cluster, 2.05 * 10))
-    for k in range(10):
+    fig, axes = plt.subplots(n_clusters, samples_per_cluster, figsize=(1.9 * samples_per_cluster, 2.05 * n_clusters))
+    if n_clusters == 1:
+        axes = np.expand_dims(axes, axis=0)
+    for k in range(n_clusters):
         picked = picked_per_k[k]
         for j in range(samples_per_cluster):
             ax = axes[k, j]
@@ -603,7 +612,8 @@ def export_hotspot_class_density(
     c_h = c_h.to(device)
     R = R.to(device)
     dl = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=0)
-    counts = np.zeros((10, 10), dtype=np.int64)
+    n_clusters = int(c_h.size(0))
+    counts = np.zeros((n_clusters, 10), dtype=np.int64)
 
     for x_scaled, digits in dl:
         x_scaled = x_scaled.to(device)
@@ -638,7 +648,7 @@ def export_hotspot_class_density(
         "per_cluster": {},
         "per_digit": {},
     }
-    for k in range(10):
+    for k in range(n_clusters):
         row_d = p_d_given_k[k]
         tot_k = int(counts[k].sum())
         dom = int(np.argmax(row_d))
@@ -653,7 +663,7 @@ def export_hotspot_class_density(
         col_k = p_k_given_d[:, d]
         tot_d = int(counts[:, d].sum())
         dom = int(np.argmax(col_k))
-        top3 = sorted([(k, float(col_k[k])) for k in range(10)], key=lambda x: -x[1])[:3]
+        top3 = sorted([(k, float(col_k[k])) for k in range(n_clusters)], key=lambda x: -x[1])[:3]
         analysis["per_digit"][str(d)] = {
             "n": tot_d,
             "entropy_cluster_mix_nat": round(_entropy_row(col_k), 4),
@@ -669,13 +679,13 @@ def export_hotspot_class_density(
         fig, ax = plt.subplots(figsize=(9, 7.5))
         im = ax.imshow(data, aspect="auto", cmap="YlOrRd", vmin=0, vmax=max(float(data.max()), 0.05))
         plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-        ax.set_xticks(range(10))
-        ax.set_yticks(range(10))
+        ax.set_xticks(range(data.shape[1]))
+        ax.set_yticks(range(data.shape[0]))
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.set_title(title)
-        for i in range(10):
-            for j in range(10):
+        for i in range(data.shape[0]):
+            for j in range(data.shape[1]):
                 v = data[i, j]
                 if v >= 0.005:
                     ax.text(j, i, format(v, fmt_cell), ha="center", va="center", color="black", fontsize=7)
@@ -700,14 +710,18 @@ def export_hotspot_class_density(
         "hotspot_P_cluster_given_digit.png",
     )
 
-    fig, axes = plt.subplots(2, 5, figsize=(16, 6))
-    axes = axes.flatten()
-    for k in range(10):
+    cols = 5
+    rows = int(np.ceil(n_clusters / float(cols)))
+    fig, axes = plt.subplots(rows, cols, figsize=(16, 3.0 * rows))
+    axes = np.array(axes).reshape(-1)
+    for k in range(n_clusters):
         ax = axes[k]
         ax.bar(range(10), p_d_given_k[k], color=plt.cm.tab10(np.linspace(0, 1, 10)))
         ax.set_xlabel("digit")
         ax.set_title(f"cluster k={k}  n={int(counts[k].sum())}")
         ax.set_ylim(0, min(1.05, float(p_d_given_k[k].max()) * 1.25 + 0.05))
+    for k in range(n_clusters, len(axes)):
+        axes[k].axis("off")
     plt.suptitle(f"Class density inside each nearest-sphere cluster ({split_name})", fontsize=12)
     plt.tight_layout()
     barp = os.path.join(out_dir, "hotspot_cluster_digit_bars.png")
@@ -763,7 +777,8 @@ def _indices_by_nearest_cluster(
     active_cluster_mask: np.ndarray | None = None,
 ) -> list[list[int]]:
     dl = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=0)
-    by_k: list[list[int]] = [[] for _ in range(10)]
+    n_clusters = int(c_h.size(0))
+    by_k: list[list[int]] = [[] for _ in range(n_clusters)]
     offset = 0
     c_h = c_h.to(device)
     model.eval()
@@ -800,13 +815,14 @@ def export_cluster_neural_hotspots(
     model.eval()
     c_h = c_h.to(device)
     R = R.to(device)
+    n_clusters = int(c_h.size(0))
     rng = np.random.RandomState(seed)
 
     by_k = _indices_by_nearest_cluster(
         model, dataset, device, c_h, curvature, batch_size, active_cluster_mask
     )
     picked: dict[int, list[int]] = {}
-    for k in range(10):
+    for k in range(n_clusters):
         idxs = by_k[k]
         if len(idxs) > max_samples_per_cluster:
             sub = rng.choice(len(idxs), max_samples_per_cluster, replace=False)
@@ -835,7 +851,7 @@ def export_cluster_neural_hotspots(
 
     cache: dict[int, tuple[np.ndarray, np.ndarray, int]] = {}
 
-    for k in range(10):
+    for k in range(n_clusters):
         sal_stack = []
         act_stack = []
         for idx in picked[k]:
@@ -878,8 +894,10 @@ def export_cluster_neural_hotspots(
         plt.close()
         print(f"[neural_hotspot] {outp}")
 
-    fig, axes = plt.subplots(10, 2, figsize=(5.2, 22))
-    for k in range(10):
+    fig, axes = plt.subplots(n_clusters, 2, figsize=(5.2, max(2.2 * n_clusters, 4.4)))
+    if n_clusters == 1:
+        axes = np.expand_dims(axes, axis=0)
+    for k in range(n_clusters):
         if k not in cache:
             axes[k, 0].text(0.5, 0.5, "empty", ha="center", va="center", transform=axes[k, 0].transAxes)
             axes[k, 1].text(0.5, 0.5, "empty", ha="center", va="center", transform=axes[k, 1].transAxes)

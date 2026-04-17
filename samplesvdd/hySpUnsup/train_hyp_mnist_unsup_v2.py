@@ -27,11 +27,13 @@ import torch
 import torch.optim as optim
 from sklearn.metrics import silhouette_samples
 from torch.utils.data import DataLoader
+from sklearn.cluster import KMeans
 
 _HYSP_UNSUP = Path(__file__).resolve().parent
 _HYSP_CHECK = _HYSP_UNSUP.parent / "hySpCheck"
 sys.path.insert(0, str(_HYSP_CHECK))
 sys.path.insert(0, str(_HYSP_UNSUP))
+sys.path.insert(0, str(_HYSP_UNSUP.parent))
 
 import train_hyp_mnist_unsup as unsup  # noqa: E402
 
@@ -162,6 +164,403 @@ def union_metrics_test(
     }
 
 
+@torch.no_grad()
+def split_overloaded_active_spheres(
+    model: HyperbolicMultiSphereSVDD,
+    c_h: torch.Tensor,
+    R: torch.Tensor,
+    tr_loader: DataLoader,
+    device: torch.device,
+    curvature: float,
+    active_mask: np.ndarray,
+    max_cluster_fraction: float,
+    split_seed: int,
+) -> tuple[torch.Tensor, torch.Tensor, np.ndarray, dict]:
+    """
+    Optional post-hoc split of overloaded active clusters into spare inactive spheres.
+    Uses nearest-sphere assignments on train set and KMeans(2) iterative bisection.
+    """
+    info: dict = {"enabled": bool(max_cluster_fraction > 0), "max_cluster_fraction": float(max_cluster_fraction)}
+    if max_cluster_fraction <= 0:
+        info["applied"] = False
+        return c_h, R, active_mask, info
+    if max_cluster_fraction >= 1.0:
+        info["applied"] = False
+        info["note"] = "max_cluster_fraction >= 1.0 disables splitting in practice."
+        return c_h, R, active_mask, info
+
+    model.eval()
+    z_parts = []
+    k_parts = []
+    for x_scaled, _ in tr_loader:
+        x_scaled = x_scaled.to(device)
+        rep, _ = model(x_scaled)
+        z_all = model.project_all_h(rep)
+        dist_sq = dist_sq_to_all_centers(z_all, c_h, curvature=curvature)
+        am = torch.as_tensor(active_mask, device=device, dtype=torch.bool)
+        dist_sq = dist_sq.masked_fill(~am.unsqueeze(0), float("inf"))
+        k_near = dist_sq.argmin(dim=1)
+        b = torch.arange(z_all.size(0), device=device)
+        z_pick = z_all[b, k_near].cpu().numpy()
+        z_parts.append(z_pick)
+        k_parts.append(k_near.cpu().numpy())
+
+    if not z_parts:
+        info["applied"] = False
+        info["note"] = "No train samples available."
+        return c_h, R, active_mask, info
+
+    Z = np.concatenate(z_parts, axis=0)
+    K = np.concatenate(k_parts, axis=0)
+    n_spheres = int(c_h.size(0))
+    counts = np.bincount(K, minlength=n_spheres)
+    n_train = int(Z.shape[0])
+    cap = max(1, int(np.ceil(max_cluster_fraction * float(n_train))))
+
+    overloaded = [k for k in range(n_spheres) if bool(active_mask[k]) and int(counts[k]) > cap]
+    spare = [k for k in range(n_spheres) if not bool(active_mask[k])]
+    info.update(
+        {
+            "applied": False,
+            "n_train": n_train,
+            "cap_count": cap,
+            "counts_before": counts.tolist(),
+            "overloaded_clusters": [int(k) for k in overloaded],
+            "spare_inactive_clusters": [int(k) for k in spare],
+            "splits": [],
+        }
+    )
+    if not overloaded or not spare:
+        return c_h, R, active_mask, info
+
+    c_new = c_h.clone()
+    R_new = R.clone()
+    active_new = active_mask.copy()
+    rng = np.random.RandomState(split_seed)
+
+    for k in overloaded:
+        idx_all = np.where(K == k)[0]
+        if idx_all.size < 2:
+            continue
+        need_extra = int(np.ceil(float(idx_all.size) / float(cap))) - 1
+        if need_extra <= 0:
+            continue
+        groups = [idx_all]
+        for _ in range(need_extra):
+            if not spare:
+                break
+            g_idx = int(np.argmax([len(g) for g in groups]))
+            g = groups.pop(g_idx)
+            if len(g) < 2:
+                groups.append(g)
+                break
+            km = KMeans(n_clusters=2, random_state=int(rng.randint(1_000_000)), n_init=10)
+            lab = km.fit_predict(Z[g])
+            g0 = g[lab == 0]
+            g1 = g[lab == 1]
+            if len(g0) == 0 or len(g1) == 0:
+                groups.append(g)
+                break
+            groups.append(g0)
+            groups.append(g1)
+
+        groups = sorted(groups, key=lambda x: len(x), reverse=True)
+        base = groups[0]
+        c_new[k] = torch.as_tensor(np.mean(Z[base], axis=0), dtype=c_new.dtype, device=c_new.device)
+        R_new[k] = R_new[k] * 0.9
+        used_spares = []
+        for g in groups[1:]:
+            if not spare:
+                break
+            s = int(spare.pop(0))
+            c_new[s] = torch.as_tensor(np.mean(Z[g], axis=0), dtype=c_new.dtype, device=c_new.device)
+            R_new[s] = R_new[k]
+            active_new[s] = True
+            used_spares.append(s)
+
+        info["splits"].append(
+            {
+                "source_cluster": int(k),
+                "source_count": int(idx_all.size),
+                "groups_after_split": [int(len(g)) for g in groups],
+                "new_clusters_activated": [int(s) for s in used_spares],
+            }
+        )
+
+    if info["splits"]:
+        info["applied"] = True
+        info["active_cluster_mask_after_split"] = active_new.astype(bool).tolist()
+    return c_new, R_new, active_new, info
+
+
+@torch.no_grad()
+def hard_cap_reassign_clusters(
+    model: HyperbolicMultiSphereSVDD,
+    c_h: torch.Tensor,
+    R: torch.Tensor,
+    tr_loader: DataLoader,
+    device: torch.device,
+    curvature: float,
+    active_mask: np.ndarray,
+    max_cluster_fraction: float,
+    chaos_factor: float,
+) -> tuple[torch.Tensor, torch.Tensor, np.ndarray, dict]:
+    """
+    Hard-cap rebalance:
+    - compute train assignments to active spheres
+    - enforce per-cluster upper cap by re-centering spheres on capped subsets
+    - overflow points are greedily reassigned to the nearest non-full active sphere
+    chaos_factor in [0,1] adds a small bias against saturated spheres during overflow routing.
+    """
+    info: dict = {
+        "enabled": bool(max_cluster_fraction > 0),
+        "max_cluster_fraction": float(max_cluster_fraction),
+        "chaos_factor": float(chaos_factor),
+        "applied": False,
+    }
+    if max_cluster_fraction <= 0:
+        return c_h, R, active_mask, info
+    if max_cluster_fraction >= 1.0:
+        info["note"] = "max_cluster_fraction >= 1.0 disables hard cap in practice."
+        return c_h, R, active_mask, info
+
+    model.eval()
+    z_parts = []
+    dist_parts = []
+    assign_parts = []
+    for x_scaled, _ in tr_loader:
+        x_scaled = x_scaled.to(device)
+        rep, _ = model(x_scaled)
+        z_all = model.project_all_h(rep)
+        dist_sq = dist_sq_to_all_centers(z_all, c_h, curvature=curvature)
+        am = torch.as_tensor(active_mask, device=device, dtype=torch.bool)
+        masked = dist_sq.masked_fill(~am.unsqueeze(0), float("inf"))
+        k_near = masked.argmin(dim=1)
+        b = torch.arange(z_all.size(0), device=device)
+        z_pick = z_all[b, k_near].cpu().numpy()
+        z_parts.append(z_pick)
+        dist_parts.append(masked.cpu().numpy())
+        assign_parts.append(k_near.cpu().numpy())
+
+    if not z_parts:
+        info["note"] = "No train samples available."
+        return c_h, R, active_mask, info
+
+    Z = np.concatenate(z_parts, axis=0)
+    D = np.concatenate(dist_parts, axis=0)
+    A = np.concatenate(assign_parts, axis=0)
+    n_spheres = int(c_h.size(0))
+    n_train = int(Z.shape[0])
+    cap = max(1, int(np.ceil(max_cluster_fraction * float(n_train))))
+    active_ids = [k for k in range(n_spheres) if bool(active_mask[k])]
+    counts_before = np.bincount(A, minlength=n_spheres)
+    if not active_ids:
+        info["note"] = "No active spheres."
+        return c_h, R, active_mask, info
+
+    # Keep best-fit points in each sphere up to cap, overflow gets rerouted.
+    keep_mask = np.zeros(n_train, dtype=bool)
+    overflow_idx: list[int] = []
+    for k in active_ids:
+        idx = np.where(A == k)[0]
+        if idx.size == 0:
+            continue
+        order = idx[np.argsort(D[idx, k])]
+        keep = order[:cap]
+        spill = order[cap:]
+        keep_mask[keep] = True
+        overflow_idx.extend(spill.tolist())
+
+    counts_after = np.zeros(n_spheres, dtype=np.int64)
+    counts_after[A[keep_mask]] = np.bincount(A[keep_mask], minlength=n_spheres)[A[keep_mask]]
+    counts_after = np.bincount(A[keep_mask], minlength=n_spheres)
+
+    # Reassign overflow to nearest non-full active sphere with optional saturation penalty.
+    A_new = A.copy()
+    for idx in overflow_idx:
+        candidates = []
+        for k in active_ids:
+            if counts_after[k] >= cap:
+                continue
+            sat = float(counts_after[k]) / float(cap)
+            penalty = chaos_factor * sat * max(1e-6, float(np.nanmean(D[idx, active_ids][np.isfinite(D[idx, active_ids])])) )
+            candidates.append((float(D[idx, k]) + penalty, k))
+        if not candidates:
+            # No room anywhere: keep original assignment.
+            counts_after[A_new[idx]] += 1
+            continue
+        _, best_k = min(candidates, key=lambda x: x[0])
+        A_new[idx] = int(best_k)
+        counts_after[best_k] += 1
+
+    c_new = c_h.clone()
+    R_new = R.clone()
+    for k in active_ids:
+        idx = np.where(A_new == k)[0]
+        if idx.size == 0:
+            continue
+        c_new[k] = torch.as_tensor(np.mean(Z[idx], axis=0), dtype=c_new.dtype, device=c_new.device)
+        if counts_before[k] > cap:
+            R_new[k] = R_new[k] * max(0.7, 1.0 - 0.3 * min(1.0, chaos_factor + 0.2))
+
+    info.update(
+        {
+            "applied": bool(len(overflow_idx) > 0),
+            "n_train": n_train,
+            "cap_count": cap,
+            "counts_before": counts_before.tolist(),
+            "counts_after": np.bincount(A_new, minlength=n_spheres).tolist(),
+            "overflow_reassigned": int(len(overflow_idx)),
+        }
+    )
+    return c_new, R_new, active_mask.copy(), info
+
+
+def hybrid_lb_ub_rebalance(
+    model: HyperbolicMultiSphereSVDD,
+    c_h: torch.Tensor,
+    R: torch.Tensor,
+    tr_loader: DataLoader,
+    device: torch.device,
+    curvature: float,
+    active_mask: np.ndarray,
+    lb_min_cluster_members: int,
+    ub_max_cluster_fraction: float,
+    split_seed: int,
+    max_iters: int,
+    hard_cap_enabled: bool,
+    chaos_factor: float,
+) -> tuple[torch.Tensor, torch.Tensor, np.ndarray, dict]:
+    """Iterative hybrid rebalance: LB pruning + UB subdivision."""
+    info: dict = {
+        "enabled": True,
+        "lb_min_cluster_members": int(lb_min_cluster_members),
+        "ub_max_cluster_fraction": float(ub_max_cluster_fraction),
+        "max_iters": int(max_iters),
+        "hard_cap_enabled": bool(hard_cap_enabled),
+        "chaos_factor": float(chaos_factor),
+        "iterations": [],
+        "applied": False,
+    }
+    if max_iters < 1:
+        info["enabled"] = False
+        info["note"] = "max_iters < 1"
+        return c_h, R, active_mask, info
+
+    c_cur = c_h
+    R_cur = R
+    active_cur = active_mask.copy()
+    any_change = False
+    for it in range(1, max_iters + 1):
+        iter_info: dict = {"iter": it}
+        lb_info: dict = {"enabled": bool(lb_min_cluster_members > 0)}
+        if lb_min_cluster_members > 0:
+            active_next, lb_prune = prune_spheres_from_train(
+                model,
+                c_cur,
+                R_cur,
+                tr_loader,
+                device,
+                curvature,
+                min_cluster_members=lb_min_cluster_members,
+                silhouette_min=None,
+                silhouette_max_samples=0,
+                silhouette_seed=split_seed + it,
+            )
+            lb_info["counts"] = lb_prune.get("train_argmin_counts", [])
+            lb_info["active_before"] = active_cur.astype(bool).tolist()
+            lb_info["active_after"] = active_next.astype(bool).tolist()
+            lb_info["changed"] = bool(not np.array_equal(active_next, active_cur))
+            active_cur = active_next
+        else:
+            lb_info["changed"] = False
+            lb_info["active_after"] = active_cur.astype(bool).tolist()
+
+        c_new, R_new, active_new, ub_info = split_overloaded_active_spheres(
+            model,
+            c_cur,
+            R_cur,
+            tr_loader,
+            device,
+            curvature,
+            active_mask=active_cur,
+            max_cluster_fraction=ub_max_cluster_fraction,
+            split_seed=split_seed + it,
+        )
+        ub_changed = bool(ub_info.get("applied", False))
+        hc_info = {"enabled": False, "applied": False}
+        hc_changed = False
+        if hard_cap_enabled and ub_max_cluster_fraction > 0:
+            c_new, R_new, active_new, hc_info = hard_cap_reassign_clusters(
+                model,
+                c_new,
+                R_new,
+                tr_loader,
+                device,
+                curvature,
+                active_new,
+                max_cluster_fraction=ub_max_cluster_fraction,
+                chaos_factor=chaos_factor,
+            )
+            hc_changed = bool(hc_info.get("applied", False))
+        iter_changed = bool(lb_info["changed"] or ub_changed or hc_changed)
+        iter_info["lb"] = lb_info
+        iter_info["ub"] = ub_info
+        iter_info["hard_cap"] = hc_info
+        iter_info["changed"] = iter_changed
+        info["iterations"].append(iter_info)
+
+        c_cur, R_cur, active_cur = c_new, R_new, active_new
+        if iter_changed:
+            any_change = True
+        else:
+            break
+
+    info["applied"] = bool(any_change)
+    info["active_cluster_mask_after_hybrid"] = active_cur.astype(bool).tolist()
+    return c_cur, R_cur, active_cur, info
+
+
+@torch.no_grad()
+def recalibrate_radii_from_train(
+    model: HyperbolicMultiSphereSVDD,
+    c_h: torch.Tensor,
+    tr_loader: DataLoader,
+    device: torch.device,
+    curvature: float,
+    active_mask: np.ndarray,
+    nu: float,
+) -> tuple[torch.Tensor, dict]:
+    """
+    Re-estimate per-sphere radii from final train assignments over active spheres.
+    This aligns union in/out with post-rebalance geometry.
+    """
+    n_spheres = int(c_h.size(0))
+    dist_sq_chunks = [[] for _ in range(n_spheres)]
+    model.eval()
+    for x_scaled, _ in tr_loader:
+        x_scaled = x_scaled.to(device)
+        rep, _ = model(x_scaled)
+        z_all = model.project_all_h(rep)
+        dist_sq_all = dist_sq_to_all_centers(z_all, c_h, curvature=curvature)
+        am = torch.as_tensor(active_mask, device=device, dtype=torch.bool)
+        masked = dist_sq_all.masked_fill(~am.unsqueeze(0), float("inf"))
+        k_near = masked.argmin(dim=1)
+        for k in range(n_spheres):
+            m = k_near == k
+            if torch.any(m):
+                dist_sq_chunks[k].append(dist_sq_all[m, k].detach().cpu())
+    R_new = update_radii_unsupervised(dist_sq_chunks, nu=nu, device=torch.device("cpu")).to(device)
+    info = {
+        "nu": float(nu),
+        "active_cluster_mask": np.asarray(active_mask, dtype=bool).tolist(),
+        "r_mean": float(R_new.mean().item()),
+        "r_min": float(R_new.min().item()),
+        "r_max": float(R_new.max().item()),
+    }
+    return R_new, info
+
+
 def _parse_digit_list(s: str, arg_name: str) -> list[int]:
     v = s.strip().lower()
     if v == "all":
@@ -182,6 +581,32 @@ def _parse_digit_list(s: str, arg_name: str) -> list[int]:
         raise SystemExit(f"{arg_name}: no digits parsed from {s!r}")
     out = sorted(set(out))
     return out
+
+
+def _write_ae_only_metadata(
+    xp_path: str,
+    args,
+    train_digits: list[int],
+    test_digits: list[int],
+    checkpoint_path: str | None,
+) -> None:
+    out = {
+        "mode": "ae_only",
+        "version": 2,
+        "ae_n_epochs": int(args.ae_n_epochs),
+        "ae_lr": float(args.ae_lr),
+        "weight_decay": float(args.weight_decay),
+        "rep_dim": int(args.rep_dim),
+        "z_dim": int(args.z_dim),
+        "n_spheres": int(args.n_spheres),
+        "curvature": float(args.curvature),
+        "train_normal_digits": train_digits,
+        "test_digits": test_digits,
+        "used_checkpoint_input": args.ae_stage1_checkpoint_path if args.skip_ae_pretrain else None,
+        "saved_checkpoint": checkpoint_path,
+    }
+    with open(os.path.join(xp_path, "results_ae_only.json"), "w", encoding="utf-8") as f:
+        json.dump(out, f, indent=2)
 
 
 def main():
@@ -220,6 +645,7 @@ def main():
     p.add_argument("--warm_up_n_epochs", type=int, default=5)
     p.add_argument("--eval_every", type=int, default=5)
     p.add_argument("--skip_ae_pretrain", action="store_true")
+    p.add_argument("--ae_only", action="store_true", help="Run/load stage-1 AE only, then exit before any SVDD training.")
     p.add_argument("--ae_stage1_checkpoint_path", type=str, default=str(default_ae))
     p.add_argument("--save_ae_stage1_checkpoint_path", type=str, default=None)
     p.add_argument("--skip_tsne", action="store_true")
@@ -244,6 +670,34 @@ def main():
     )
     p.add_argument("--silhouette_max_samples", type=int, default=800)
     p.add_argument("--silhouette_seed", type=int, default=42)
+    p.add_argument(
+        "--max_cluster_fraction",
+        type=float,
+        default=0.0,
+        help="If >0, post-prune split overloaded active clusters when train assignment count > fraction*N_train (uses spare inactive spheres).",
+    )
+    p.add_argument("--split_seed", type=int, default=42)
+    p.add_argument("--hybrid_rebalance", action="store_true", help="Enable hybrid LB/UB rebalance (v3 style).")
+    p.add_argument(
+        "--lb_min_cluster_members",
+        type=int,
+        default=None,
+        help="Lower-bound member cap for hybrid rebalance (defaults to --min_cluster_members).",
+    )
+    p.add_argument(
+        "--ub_max_cluster_fraction",
+        type=float,
+        default=None,
+        help="Upper-bound fraction cap for hybrid rebalance (defaults to --max_cluster_fraction).",
+    )
+    p.add_argument("--hybrid_max_iters", type=int, default=3)
+    p.add_argument("--hard_cap_reassign", action="store_true", help="After UB split, hard-cap saturated clusters by rerouting overflow.")
+    p.add_argument(
+        "--chaos_factor",
+        type=float,
+        default=0.15,
+        help="Small saturation penalty during hard-cap rerouting/subdivision. 0=deterministic nearest, ~0.1-0.3=gentle diversification.",
+    )
     p.add_argument(
         "--auc_mode",
         type=str,
@@ -335,6 +789,10 @@ def main():
                 "extra heads stay randomly initialized."
             )
         print(f"[AE] skipped pretrain; loaded: {ckpt_path}")
+        if args.ae_only:
+            _write_ae_only_metadata(args.xp_path, args, train_digits, test_digits, ckpt_path)
+            print("[AE] ae_only=True; exiting after checkpoint load.")
+            return
     else:
         opt_ae = optim.Adam(model.parameters(), lr=args.ae_lr, weight_decay=args.weight_decay)
         for ep in range(1, args.ae_n_epochs + 1):
@@ -354,6 +812,12 @@ def main():
             os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
             torch.save({"model_state": model.state_dict()}, out_path)
             print(f"[AE] saved stage-1 checkpoint: {out_path}")
+        else:
+            out_path = None
+        if args.ae_only:
+            _write_ae_only_metadata(args.xp_path, args, train_digits, test_digits, out_path)
+            print("[AE] ae_only=True; exiting before SVDD stage.")
+            return
 
     c_h = init_centers_h_unsupervised(model, tr_loader, device=device)
     R = torch.zeros((args.n_spheres,), device=device)
@@ -500,6 +964,49 @@ def main():
         silhouette_max_samples=args.silhouette_max_samples,
         silhouette_seed=args.silhouette_seed,
     )
+    c_h, R, active_mask, split_info = split_overloaded_active_spheres(
+        model,
+        c_h,
+        R,
+        tr_loader,
+        device,
+        args.curvature,
+        active_mask=active_mask,
+        max_cluster_fraction=args.max_cluster_fraction,
+        split_seed=args.split_seed,
+    )
+    hybrid_info = {"enabled": False, "applied": False}
+    if args.hybrid_rebalance:
+        lb_eff = args.lb_min_cluster_members if args.lb_min_cluster_members is not None else args.min_cluster_members
+        ub_eff = args.ub_max_cluster_fraction if args.ub_max_cluster_fraction is not None else args.max_cluster_fraction
+        c_h, R, active_mask, hybrid_info = hybrid_lb_ub_rebalance(
+            model,
+            c_h,
+            R,
+            tr_loader,
+            device,
+            args.curvature,
+            active_mask=active_mask,
+            lb_min_cluster_members=int(max(0, lb_eff)),
+            ub_max_cluster_fraction=float(max(0.0, ub_eff)),
+            split_seed=args.split_seed,
+            max_iters=args.hybrid_max_iters,
+            hard_cap_enabled=bool(args.hard_cap_reassign),
+            chaos_factor=float(max(0.0, args.chaos_factor)),
+        )
+    R, radii_recalib_info = recalibrate_radii_from_train(
+        model,
+        c_h,
+        tr_loader,
+        device,
+        args.curvature,
+        active_mask=active_mask,
+        nu=args.nu,
+    )
+    print(
+        f"[v2/v3 RECALIB-R] mean={radii_recalib_info['r_mean']:.4f} "
+        f"min={radii_recalib_info['r_min']:.4f} max={radii_recalib_info['r_max']:.4f}"
+    )
     union_m = union_metrics_test(model, c_h, R, te_loader, device, args.curvature, active_mask)
 
     macro_pruned, per_pruned = evaluate(
@@ -537,6 +1044,9 @@ def main():
         "unsupervised": True,
         "ae_checkpoint": args.ae_stage1_checkpoint_path if args.skip_ae_pretrain else None,
         "prune": prune_info,
+        "split_overloaded": split_info,
+        "hybrid_rebalance": hybrid_info,
+        "radii_recalibration": radii_recalib_info,
         "union_test_metrics_active_spheres": union_m,
     }
     with open(os.path.join(args.xp_path, "results.json"), "w", encoding="utf-8") as f:
@@ -559,20 +1069,14 @@ def main():
             "version": 2,
             "active_cluster_mask": active_mask.tolist(),
             "prune_info": prune_info,
+            "split_info": split_info,
+            "hybrid_info": hybrid_info,
+            "radii_recalibration": radii_recalib_info,
         },
         os.path.join(args.xp_path, "checkpoint_v2.pth"),
     )
 
-    if args.n_spheres != 10 and (
-        (not args.skip_tsne)
-        or (args.export_cluster_samples > 0)
-        or args.export_hotspot_analysis
-        or args.export_cluster_neural_hotspots
-    ):
-        print(
-            "[v2] Skipping t-SNE/cluster exports: current helper visualizations are implemented for n_spheres=10 only."
-        )
-    elif (
+    if (
         (not args.skip_tsne)
         or (args.export_cluster_samples > 0)
         or args.export_hotspot_analysis

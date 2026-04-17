@@ -1,0 +1,489 @@
+{
+  "split": "test",
+  "samples_per_cluster": 20,
+  "nearest_sphere_assignment": "active_argmin",
+  "active_cluster_mask": [
+    true,
+    false,
+    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+  ],
+  "clusters": {
+    "0": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 0
+    },
+    "1": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 0
+    },
+    "2": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 0
+    },
+    "3": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 7,
+        "3": 7,
+        "4": 3,
+        "5": 1,
+        "6": 0,
+        "7": 1,
+        "8": 1,
+        "9": 0
+      },
+      "total_available_in_split": 255
+    },
+    "4": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 12,
+        "3": 6,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 2,
+        "9": 0
+      },
+      "total_available_in_split": 36
+    },
+    "5": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 2,
+        "5": 0,
+        "6": 0,
+        "7": 2,
+        "8": 0,
+        "9": 16
+      },
+      "total_available_in_split": 59
+    },
+    "6": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 19,
+        "3": 1,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 87
+    },
+    "7": {
+      "digit_counts_exported": {
+        "0": 2,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 7,
+        "5": 2,
+        "6": 7,
+        "7": 1,
+        "8": 0,
+        "9": 1
+      },
+      "total_available_in_split": 169
+    },
+    "8": {
+      "digit_counts_exported": {
+        "0": 3,
+        "1": 1,
+        "2": 1,
+        "3": 1,
+        "4": 1,
+        "5": 6,
+        "6": 1,
+        "7": 1,
+        "8": 3,
+        "9": 2
+      },
+      "total_available_in_split": 5013
+    },
+    "9": {
+      "digit_counts_exported": {
+        "0": 5,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 14,
+        "6": 0,
+        "7": 0,
+        "8": 1,
+        "9": 0
+      },
+      "total_available_in_split": 112
+    },
+    "10": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 20
+      },
+      "total_available_in_split": 73
+    },
+    "11": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 20,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 71
+    },
+    "12": {
+      "digit_counts_exported": {
+        "0": 14,
+        "1": 0,
+        "2": 0,
+        "3": 2,
+        "4": 0,
+        "5": 3,
+        "6": 0,
+        "7": 0,
+        "8": 1,
+        "9": 0
+      },
+      "total_available_in_split": 420
+    },
+    "13": {
+      "digit_counts_exported": {
+        "0": 20,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 43
+    },
+    "14": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 5,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 15
+      },
+      "total_available_in_split": 328
+    },
+    "15": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 20,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 95
+    },
+    "16": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 1,
+        "2": 1,
+        "3": 0,
+        "4": 3,
+        "5": 1,
+        "6": 7,
+        "7": 3,
+        "8": 0,
+        "9": 4
+      },
+      "total_available_in_split": 1782
+    },
+    "17": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 19,
+        "8": 1,
+        "9": 0
+      },
+      "total_available_in_split": 122
+    },
+    "18": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 2,
+        "3": 1,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 1,
+        "8": 11,
+        "9": 1
+      },
+      "total_available_in_split": 16
+    },
+    "19": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 9,
+        "3": 11,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 23
+    },
+    "20": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 20,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 42
+    },
+    "21": {
+      "digit_counts_exported": {
+        "0": 3,
+        "1": 3,
+        "2": 2,
+        "3": 4,
+        "4": 1,
+        "5": 2,
+        "6": 1,
+        "7": 0,
+        "8": 2,
+        "9": 2
+      },
+      "total_available_in_split": 2983
+    },
+    "22": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 4,
+        "5": 0,
+        "6": 0,
+        "7": 2,
+        "8": 0,
+        "9": 14
+      },
+      "total_available_in_split": 76
+    },
+    "23": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 1,
+        "4": 2,
+        "5": 0,
+        "6": 0,
+        "7": 6,
+        "8": 1,
+        "9": 10
+      },
+      "total_available_in_split": 432
+    },
+    "24": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 20,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 52
+    },
+    "25": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 19,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 1,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 176
+    },
+    "26": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 3,
+        "2": 2,
+        "3": 0,
+        "4": 1,
+        "5": 0,
+        "6": 5,
+        "7": 8,
+        "8": 0,
+        "9": 1
+      },
+      "total_available_in_split": 826
+    },
+    "27": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 2,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 2
+    },
+    "28": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 1,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 19
+      },
+      "total_available_in_split": 61
+    },
+    "29": {
+      "digit_counts_exported": {
+        "0": 0,
+        "1": 0,
+        "2": 12,
+        "3": 8,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "total_available_in_split": 601
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "os": "Linux-6.12.0-174.el10.x86_64-x86_64-with-glibc2.17",
+  "python": "CPython 3.8.20",
+  "startedAt": "2026-04-17T09:55:14.415085Z",
+  "args": [
+    "--runs_root",
+    "samplesvdd/hySpUnsup/runs/sensitivity_v3/chaos_0p0",
+    "--mnist_processed_dir",
+    "/home/josepcec/Downloads/OASPL/svDD/CVAEChecked/Data/MNIST_processed",
+    "--split",
+    "test",
+    "--device",
+    "cuda",
+    "--auc_mode",
+    "union",
+    "--export_cluster_samples",
+    "5",
+    "--cluster_export_seed",
+    "42",
+    "--export_hotspot_analysis",
+    "--export_cluster_neural_hotspots",
+    "--neural_hotspot_max_samples",
+    "20",
+    "--use_wandb",
+    "--wandb_project",
+    "hyspunsup-sensitivity",
+    "--wandb_group",
+    "smoke_test",
+    "--wandb_tags",
+    "smoke,replay",
+    "--wandb_mode",
+    "online",
+    "--wandb_name_prefix",
+    "smoke-"
+  ],
+  "program": "samplesvdd/hySpUnsup/replay_checkpoint_viz_eval.py",
+  "codePath": "samplesvdd/hySpUnsup/replay_checkpoint_viz_eval.py",
+  "codePathLocal": "samplesvdd/hySpUnsup/replay_checkpoint_viz_eval.py",
+  "git": {
+    "remote": "https://github.com/ceciljoseph97/svDD",
+    "commit": "4db91a7bbf56e9b9ef02796e3a5a7afa6892626f"
+  },
+  "email": "ceciljoseph353912@gmail.com",
+  "root": "/home/josepcec/Downloads/OASPL/svDD",
+  "host": "tizian",
+  "executable": "/home/josepcec/miniconda3/envs/lsAirsim/bin/python",
+  "cpu_count": 20,
+  "cpu_count_logical": 20,
+  "gpu": "NVIDIA RTX A1000",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "107242856448",
+      "used": "71257223168"
+    }
+  },
+  "memory": {
+    "total": "66446827520"
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA RTX A1000",
+      "memoryTotal": "8585740288",
+      "cudaCores": 2304,
+      "architecture": "Ampere",
+      "uuid": "GPU-edde81a1-1fa1-c6c1-ba55-c2107b4ee92d"
+    }
+  ],
+  "cudaVersion": "13.1",
+  "writerId": "nr834q91s203wrafg52q5khcoydcdd3c"
+}

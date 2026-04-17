@@ -1,0 +1,50 @@
+{
+  "run_dir": "samplesvdd/hySpUnsup/runs/sensitivity_v3/nspheres_k15",
+  "checkpoint": "samplesvdd/hySpUnsup/runs/sensitivity_v3/nspheres_k15/checkpoint_v2.pth",
+  "n_spheres": 15,
+  "curvature": 1.0,
+  "objective": "union-soft",
+  "active_cluster_mask": [
+    true,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+    true,
+    false,
+    false,
+    false
+  ],
+  "train_macro_auc": 0.5013097689466439,
+  "train_per_digit_auc": {
+    "0": 0.5392422480411861,
+    "1": 0.5023879060964322,
+    "2": 0.36043096972490507,
+    "3": 0.4477156075544386,
+    "4": 0.6153257763525846,
+    "5": 0.5274986890485371,
+    "6": 0.56186096909834,
+    "7": 0.388758579005392,
+    "8": 0.5955339311822662,
+    "9": 0.4743430133623578
+  },
+  "test_macro_auc": 0.5012684074290032,
+  "test_per_digit_auc": {
+    "0": 0.5367706192553436,
+    "1": 0.49610666155223115,
+    "2": 0.37453548085239113,
+    "3": 0.4604883717869734,
+    "4": 0.6022869444944927,
+    "5": 0.5315546723755536,
+    "6": 0.5612739632785643,
+    "7": 0.39686926350643426,
+    "8": 0.5852533764977725,
+    "9": 0.46754472069027636
+  }
+}
