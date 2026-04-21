@@ -44,6 +44,7 @@ from hyperbolic_multi_sphere import (  # noqa: E402
     svdd_loss_soft_boundary,
     update_radii_unsupervised,
 )
+from euclidean_multi_sphere import EuclideanMultiSphereSVDD, dist_sq_to_all_centers_e, init_centers_e  # noqa: E402
 from mnist_local import MNISTDigitsProcessedRawDataset, MNIST_LeNet_SVDDIAE, recon_mse_loss  # noqa: E402
 
 UnsupervisedScaledDataset = unsup.UnsupervisedScaledDataset
@@ -54,6 +55,24 @@ plot_tsne_unsupervised = unsup.plot_tsne_unsupervised
 export_cluster_sample_images = unsup.export_cluster_sample_images
 export_hotspot_class_density = unsup.export_hotspot_class_density
 export_cluster_neural_hotspots = unsup.export_cluster_neural_hotspots
+
+
+def _sphere_overlap_penalty_euclidean(c_h: torch.Tensor, R: torch.Tensor, margin: float) -> torch.Tensor:
+    K = c_h.size(0)
+    if K <= 1:
+        return torch.tensor(0.0, device=c_h.device)
+    penalties = []
+    for a in range(K):
+        for b in range(a + 1, K):
+            d_ab = torch.norm(c_h[a] - c_h[b], p=2)
+            penalties.append(torch.relu((R[a] + R[b] + float(margin)) - d_ab))
+    return torch.mean(torch.stack(penalties)) if penalties else torch.tensor(0.0, device=c_h.device)
+
+
+def _dist_sq_all_for_model(model, z_all, c_h, curvature: float):
+    if isinstance(model, EuclideanMultiSphereSVDD):
+        return dist_sq_to_all_centers_e(z_all, c_h)
+    return dist_sq_to_all_centers(z_all, c_h, curvature=curvature)
 
 
 @torch.no_grad()
@@ -81,7 +100,7 @@ def prune_spheres_from_train(
         x_scaled = x_scaled.to(device)
         rep, _ = model(x_scaled)
         z_all = model.project_all_h(rep)
-        dist_sq = dist_sq_to_all_centers(z_all, c_h, curvature=curvature)
+        dist_sq = _dist_sq_all_for_model(model, z_all, c_h, curvature=curvature)
         k_near = dist_sq.argmin(dim=1)
         b = torch.arange(z_all.size(0), device=device)
         z_pick = z_all[b, k_near].cpu().numpy()
@@ -149,7 +168,7 @@ def union_metrics_test(
         x_scaled = x_scaled.to(device)
         rep, _ = model(x_scaled)
         z_all = model.project_all_h(rep)
-        dist_sq = dist_sq_to_all_centers(z_all, c_h, curvature=curvature)
+        dist_sq = _dist_sq_all_for_model(model, z_all, c_h, curvature=curvature)
         margin = dist_sq - (R.unsqueeze(0) ** 2)
         am = torch.as_tensor(active_mask, device=device, dtype=torch.bool)
         margin = margin.masked_fill(~am.unsqueeze(0), float("inf"))
@@ -196,7 +215,7 @@ def split_overloaded_active_spheres(
         x_scaled = x_scaled.to(device)
         rep, _ = model(x_scaled)
         z_all = model.project_all_h(rep)
-        dist_sq = dist_sq_to_all_centers(z_all, c_h, curvature=curvature)
+        dist_sq = _dist_sq_all_for_model(model, z_all, c_h, curvature=curvature)
         am = torch.as_tensor(active_mask, device=device, dtype=torch.bool)
         dist_sq = dist_sq.masked_fill(~am.unsqueeze(0), float("inf"))
         k_near = dist_sq.argmin(dim=1)
@@ -332,7 +351,7 @@ def hard_cap_reassign_clusters(
         x_scaled = x_scaled.to(device)
         rep, _ = model(x_scaled)
         z_all = model.project_all_h(rep)
-        dist_sq = dist_sq_to_all_centers(z_all, c_h, curvature=curvature)
+        dist_sq = _dist_sq_all_for_model(model, z_all, c_h, curvature=curvature)
         am = torch.as_tensor(active_mask, device=device, dtype=torch.bool)
         masked = dist_sq.masked_fill(~am.unsqueeze(0), float("inf"))
         k_near = masked.argmin(dim=1)
@@ -521,46 +540,6 @@ def hybrid_lb_ub_rebalance(
     return c_cur, R_cur, active_cur, info
 
 
-@torch.no_grad()
-def recalibrate_radii_from_train(
-    model: HyperbolicMultiSphereSVDD,
-    c_h: torch.Tensor,
-    tr_loader: DataLoader,
-    device: torch.device,
-    curvature: float,
-    active_mask: np.ndarray,
-    nu: float,
-) -> tuple[torch.Tensor, dict]:
-    """
-    Re-estimate per-sphere radii from final train assignments over active spheres.
-    This aligns union in/out with post-rebalance geometry.
-    """
-    n_spheres = int(c_h.size(0))
-    dist_sq_chunks = [[] for _ in range(n_spheres)]
-    model.eval()
-    for x_scaled, _ in tr_loader:
-        x_scaled = x_scaled.to(device)
-        rep, _ = model(x_scaled)
-        z_all = model.project_all_h(rep)
-        dist_sq_all = dist_sq_to_all_centers(z_all, c_h, curvature=curvature)
-        am = torch.as_tensor(active_mask, device=device, dtype=torch.bool)
-        masked = dist_sq_all.masked_fill(~am.unsqueeze(0), float("inf"))
-        k_near = masked.argmin(dim=1)
-        for k in range(n_spheres):
-            m = k_near == k
-            if torch.any(m):
-                dist_sq_chunks[k].append(dist_sq_all[m, k].detach().cpu())
-    R_new = update_radii_unsupervised(dist_sq_chunks, nu=nu, device=torch.device("cpu")).to(device)
-    info = {
-        "nu": float(nu),
-        "active_cluster_mask": np.asarray(active_mask, dtype=bool).tolist(),
-        "r_mean": float(R_new.mean().item()),
-        "r_min": float(R_new.min().item()),
-        "r_max": float(R_new.max().item()),
-    }
-    return R_new, info
-
-
 def _parse_digit_list(s: str, arg_name: str) -> list[int]:
     v = s.strip().lower()
     if v == "all":
@@ -631,6 +610,7 @@ def main():
     p.add_argument("--rep_dim", type=int, default=32)
     p.add_argument("--z_dim", type=int, default=16)
     p.add_argument("--n_spheres", type=int, default=10)
+    p.add_argument("--geometry", type=str, default="hyperbolic", choices=["hyperbolic", "euclidean"])
     p.add_argument("--curvature", type=float, default=1.0)
     p.add_argument("--ae_n_epochs", type=int, default=10)
     p.add_argument("--svdd_n_epochs", type=int, default=25)
@@ -756,9 +736,19 @@ def main():
     te_loader = DataLoader(te, batch_size=args.batch_size, shuffle=False, num_workers=args.n_jobs_dataloader)
 
     backbone = MNIST_LeNet_SVDDIAE(rep_dim=args.rep_dim)
-    model = HyperbolicMultiSphereSVDD(
-        backbone=backbone, rep_dim=args.rep_dim, z_dim=args.z_dim, n_digits=args.n_spheres, c=args.curvature
-    ).to(device)
+    if args.geometry == "hyperbolic":
+        model = HyperbolicMultiSphereSVDD(
+            backbone=backbone, rep_dim=args.rep_dim, z_dim=args.z_dim, n_digits=args.n_spheres, c=args.curvature
+        ).to(device)
+    else:
+        model = EuclideanMultiSphereSVDD(
+            backbone=backbone, rep_dim=args.rep_dim, z_dim=args.z_dim, n_digits=args.n_spheres
+        ).to(device)
+        # Compatibility shim for shared helper functions in train_hyp_mnist_unsup.py
+        model.project_all_h = model.project_all  # type: ignore[attr-defined]
+        unsup.dist_sq_to_all_centers = lambda z_all, c_h, curvature: dist_sq_to_all_centers_e(z_all, c_h)
+    dist_fn = dist_sq_to_all_centers if args.geometry == "hyperbolic" else (lambda z_all, c_h, curvature: dist_sq_to_all_centers_e(z_all, c_h))
+    overlap_fn = sphere_overlap_penalty if args.geometry == "hyperbolic" else (lambda c_h, R, curvature, margin: _sphere_overlap_penalty_euclidean(c_h, R, margin))
 
     if args.skip_ae_pretrain:
         ckpt_path = args.ae_stage1_checkpoint_path
@@ -819,7 +809,7 @@ def main():
             print("[AE] ae_only=True; exiting before SVDD stage.")
             return
 
-    c_h = init_centers_h_unsupervised(model, tr_loader, device=device)
+    c_h = init_centers_h_unsupervised(model, tr_loader, device=device) if args.geometry == "hyperbolic" else init_centers_e(model, tr_loader, device=device)
     R = torch.zeros((args.n_spheres,), device=device)
     full_active_mask = np.ones(args.n_spheres, dtype=bool)
 
@@ -842,7 +832,7 @@ def main():
             x_scaled = x_scaled.to(device)
             rep, recon = model(x_scaled)
             z_all_h = model.project_all_h(rep)
-            dist_sq_all = dist_sq_to_all_centers(z_all_h, c_h, curvature=args.curvature)
+            dist_sq_all = dist_fn(z_all_h, c_h, curvature=args.curvature)
             rec = recon_mse_loss(recon, x_scaled)
 
             min_sq, k_idx = dist_sq_all.min(dim=1)
@@ -852,7 +842,7 @@ def main():
                 R_sel = R[k_idx]
                 sv = svdd_loss_soft_boundary(min_sq, R_sel, nu=args.nu)
 
-            ov = sphere_overlap_penalty(c_h, R, curvature=args.curvature, margin=args.margin_overlap)
+            ov = overlap_fn(c_h, R, curvature=args.curvature, margin=args.margin_overlap)
             loss = rec + args.lambda_svdd * sv + args.lambda_overlap * ov
             opt.zero_grad()
             loss.backward()
@@ -904,6 +894,7 @@ def main():
                     "z_dim": args.z_dim,
                     "curvature": args.curvature,
                     "n_spheres": args.n_spheres,
+                    "geometry": args.geometry,
                     "objective": args.objective,
                     "unsupervised": True,
                     "version": 2,
@@ -938,6 +929,7 @@ def main():
                 "z_dim": args.z_dim,
                 "curvature": args.curvature,
                 "n_spheres": args.n_spheres,
+                "geometry": args.geometry,
                 "objective": args.objective,
                 "unsupervised": True,
                 "version": 2,
@@ -994,19 +986,6 @@ def main():
             hard_cap_enabled=bool(args.hard_cap_reassign),
             chaos_factor=float(max(0.0, args.chaos_factor)),
         )
-    R, radii_recalib_info = recalibrate_radii_from_train(
-        model,
-        c_h,
-        tr_loader,
-        device,
-        args.curvature,
-        active_mask=active_mask,
-        nu=args.nu,
-    )
-    print(
-        f"[v2/v3 RECALIB-R] mean={radii_recalib_info['r_mean']:.4f} "
-        f"min={radii_recalib_info['r_min']:.4f} max={radii_recalib_info['r_max']:.4f}"
-    )
     union_m = union_metrics_test(model, c_h, R, te_loader, device, args.curvature, active_mask)
 
     macro_pruned, per_pruned = evaluate(
@@ -1038,6 +1017,7 @@ def main():
         "per_digit_auc_test_pruned_active_spheres": per_pruned,
         "curvature": args.curvature,
         "n_spheres": args.n_spheres,
+        "geometry": args.geometry,
         "train_normal_digits": train_digits,
         "test_digits": test_digits,
         "objective": args.objective,
@@ -1046,7 +1026,6 @@ def main():
         "prune": prune_info,
         "split_overloaded": split_info,
         "hybrid_rebalance": hybrid_info,
-        "radii_recalibration": radii_recalib_info,
         "union_test_metrics_active_spheres": union_m,
     }
     with open(os.path.join(args.xp_path, "results.json"), "w", encoding="utf-8") as f:
@@ -1062,6 +1041,7 @@ def main():
             "z_dim": args.z_dim,
             "curvature": args.curvature,
             "n_spheres": args.n_spheres,
+            "geometry": args.geometry,
             "train_normal_digits": train_digits,
             "test_digits": test_digits,
             "objective": args.objective,
@@ -1071,7 +1051,6 @@ def main():
             "prune_info": prune_info,
             "split_info": split_info,
             "hybrid_info": hybrid_info,
-            "radii_recalibration": radii_recalib_info,
         },
         os.path.join(args.xp_path, "checkpoint_v2.pth"),
     )

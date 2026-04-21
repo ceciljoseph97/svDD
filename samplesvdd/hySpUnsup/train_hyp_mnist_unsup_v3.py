@@ -101,6 +101,12 @@ def _parse_v3_args(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
 def main() -> None:
     v3_args, passthrough = _parse_v3_args(sys.argv[1:])
     sys.argv = [sys.argv[0], *passthrough]
+    geometry = "hyperbolic"
+    if "--geometry" in passthrough:
+        try:
+            geometry = passthrough[passthrough.index("--geometry") + 1]
+        except Exception:
+            geometry = "hyperbolic"
 
     # v3 defaults: turn on hybrid rebalance and hard-cap unless user explicitly sets them.
     if "--hybrid_rebalance" not in sys.argv:
@@ -108,7 +114,9 @@ def main() -> None:
     if "--hard_cap_reassign" not in sys.argv:
         sys.argv.append("--hard_cap_reassign")
 
-    if not v3_args.disable_agglomerative_init:
+    if geometry == "euclidean":
+        print("[v3] geometry=euclidean; agglomerative hyperbolic init is disabled")
+    elif not v3_args.disable_agglomerative_init:
         def _wrapped_agglomerative_init(model, train_loader, device, eps=1e-5):
             return init_centers_h_unsupervised_agglomerative(
                 model=model,

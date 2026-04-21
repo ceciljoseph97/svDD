@@ -283,6 +283,8 @@ def plot_tsne_unsupervised(
     t-SNE on per-sample hyperbolic embedding from the *nearest* sphere (argmin_k d(z^k, c_k)).
     If active_cluster_mask has False entries, assignment is argmin over **active** k only (pruned heads ignored).
     Cluster id = k_near (unsupervised). Saves dual panel: (1) clusters + shaded hulls, (2) true digit + in/out union.
+    In/out is always UNION-based: inside iff any active sphere contains the point, i.e.
+    min_k(d_h^2(z_k,c_k) - R_k^2) <= 0.
     """
     model.eval()
     c_h = c_h.to(device)
@@ -318,8 +320,6 @@ def plot_tsne_unsupervised(
         zs.append(z_pick.cpu())
         digits_list.append(digits.cpu())
         cluster_list.append(k_near.cpu())
-        # In/Out is defined by membership in ANY active sphere (union criterion):
-        # inside if min_k_active (d_k^2 - R_k^2) <= 0, else outside all active spheres.
         margin = dist_sq - (R.unsqueeze(0) ** 2)
         am = torch.as_tensor(active_cluster_mask, device=dist_sq.device, dtype=torch.bool)
         margin = margin.masked_fill(~am.unsqueeze(0), float("inf"))
@@ -448,13 +448,13 @@ def plot_tsne_unsupervised(
             ax1.scatter(Z2[m_out, 0], Z2[m_out, 1], s=12, marker="x", color=digit_colors[k], alpha=0.85)
     leg_digits = [Line2D([0], [0], marker="o", color=digit_colors[j], linestyle="None", markersize=6, label=f"{j}") for j in range(10)]
     leg_state = [
-        Line2D([0], [0], marker="o", color="gray", linestyle="None", markersize=6, label="inside any cluster"),
-        Line2D([0], [0], marker="x", color="gray", linestyle="None", markersize=6, label="outside all clusters"),
+        Line2D([0], [0], marker="o", color="gray", linestyle="None", markersize=6, label="in union"),
+        Line2D([0], [0], marker="x", color="gray", linestyle="None", markersize=6, label="outside"),
     ]
     leg1 = ax1.legend(handles=leg_state, loc="lower right", fontsize=9, frameon=True)
     leg2 = ax1.legend(handles=leg_digits, loc="upper left", fontsize=8, frameon=True, ncol=2)
     ax1.add_artist(leg1)
-    ax1.set_title("Same embedding, true digit (eval) + inside/outside cluster union")
+    ax1.set_title("Same embedding, true digit (eval) + union in/out")
     ax1.set_xlabel("t-SNE-1")
     ax1.set_ylabel("t-SNE-2")
     ax0.set_aspect("equal", adjustable="datalim")
