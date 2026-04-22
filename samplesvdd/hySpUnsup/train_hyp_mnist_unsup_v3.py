@@ -115,6 +115,8 @@ def main() -> None:
         sys.argv.append("--inline_radius_prune")
     if "--inline_update_centers" not in sys.argv:
         sys.argv.append("--inline_update_centers")
+    if "--strict_paper_reporting" not in sys.argv:
+        sys.argv.append("--strict_paper_reporting")
 
     if geometry == "euclidean":
         print("[v3] geometry=euclidean; agglomerative hyperbolic init is disabled")

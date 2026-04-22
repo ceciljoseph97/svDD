@@ -26,6 +26,7 @@ import numpy as np
 import torch
 import torch.optim as optim
 from sklearn.metrics import silhouette_samples
+from sklearn.metrics import roc_auc_score
 from torch.utils.data import DataLoader
 from sklearn.cluster import KMeans
 
@@ -182,6 +183,65 @@ def union_metrics_test(
         "union_margin_mean": float(np.mean(finite)),
         "union_margin_std": float(np.std(finite)),
     }
+
+
+@torch.no_grad()
+def evaluate_binary_normal_vs_rest(
+    model: HyperbolicMultiSphereSVDD,
+    c_h: torch.Tensor,
+    R: torch.Tensor,
+    loader: DataLoader,
+    device: torch.device,
+    curvature: float,
+    active_mask: np.ndarray,
+    normal_digits: list[int],
+) -> dict:
+    """
+    Strict paper-style binary evaluation:
+      y=0 for normal-set digits, y=1 for the rest.
+      score = union margin min_k(d^2 - R_k^2) over active spheres.
+    """
+    model.eval()
+    normal_set = {int(d) for d in normal_digits}
+    scores = []
+    labels = []
+    am = torch.as_tensor(active_mask, device=device, dtype=torch.bool)
+
+    for x_scaled, digits in loader:
+        x_scaled = x_scaled.to(device)
+        rep, _ = model(x_scaled)
+        z_all = model.project_all_h(rep)
+        dist_sq = _dist_sq_all_for_model(model, z_all, c_h, curvature=curvature)
+        margin = dist_sq - (R.unsqueeze(0) ** 2)
+        margin = margin.masked_fill(~am.unsqueeze(0), float("inf"))
+        union_score = margin.min(dim=1).values.detach().cpu().numpy()
+        d_np = digits.detach().cpu().numpy().astype(int)
+        y_np = np.asarray([0 if int(d) in normal_set else 1 for d in d_np], dtype=np.int32)
+        scores.append(union_score)
+        labels.append(y_np)
+
+    if not scores:
+        return {"binary_auc_normal_vs_rest": None, "reason": "no test samples"}
+
+    s = np.concatenate(scores, axis=0)
+    y = np.concatenate(labels, axis=0)
+    n_norm = int(np.sum(y == 0))
+    n_anom = int(np.sum(y == 1))
+    out = {
+        "n_test_samples": int(y.shape[0]),
+        "n_normal_test_samples": n_norm,
+        "n_anomaly_test_samples": n_anom,
+    }
+    if n_norm == 0 or n_anom == 0:
+        out["binary_auc_normal_vs_rest"] = None
+        out["reason"] = "single-class test labels (all-normal or no normal present); AUC undefined"
+        return out
+    try:
+        out["binary_auc_normal_vs_rest"] = float(roc_auc_score(y, s))
+    except ValueError as e:
+        out["binary_auc_normal_vs_rest"] = None
+        out["reason"] = str(e)
+    return out
 
 
 @torch.no_grad()
@@ -818,6 +878,11 @@ def main():
         default=None,
         help="Normal classes used for training only. Example: '0,1,2'. If omitted, uses --digits.",
     )
+    p.add_argument(
+        "--strict_paper_reporting",
+        action="store_true",
+        help="Strict paper reporting: evaluate binary normal-set vs rest using --normal_digits. If enabled and --normal_digits is set, test digits are forced to all.",
+    )
     p.add_argument("--train_fraction", type=float, default=0.8)
     p.add_argument("--batch_size", type=int, default=256)
     p.add_argument("--n_jobs_dataloader", type=int, default=0)
@@ -847,11 +912,17 @@ def main():
     p.add_argument("--save_ae_stage1_checkpoint_path", type=str, default=None)
     p.add_argument("--skip_tsne", action="store_true")
     p.add_argument("--tsne_split", type=str, default="test", choices=["train", "test"])
-    p.add_argument("--tsne_max_samples", type=int, default=2000)
+    p.add_argument("--tsne_max_samples", type=int, default=6000)
     p.add_argument("--tsne_perplexity", type=float, default=30.0)
     p.add_argument("--tsne_iter", type=int, default=1000)
     p.add_argument("--tsne_seed", type=int, default=42)
     p.add_argument("--tsne_out", type=str, default=None)
+    p.add_argument(
+        "--tsne_views",
+        type=str,
+        default="dual",
+        help="Comma list of t-SNE views: dual,hulls,union,paper_occ,all",
+    )
     # v2
     p.add_argument(
         "--min_cluster_members",
@@ -956,6 +1027,9 @@ def main():
     device = torch.device(args.device)
     test_digits = _parse_digit_list(args.digits, "--digits")
     train_digits = _parse_digit_list(args.normal_digits, "--normal_digits") if args.normal_digits else list(test_digits)
+    if args.strict_paper_reporting and args.normal_digits:
+        test_digits = list(range(10))
+        print("[STRICT] strict_paper_reporting=True -> forcing test digits to all (0..9)")
     print(f"[DATA] train normal digits={train_digits} | test digits={test_digits}")
 
     tr_raw = MNISTDigitsProcessedRawDataset(
@@ -1065,6 +1139,7 @@ def main():
     best_epoch = -1
     macro_auc_at_best = float("nan")
     best_per_digit = {}
+    binary_auc_at_best = None
     training_active_mask = np.ones(args.n_spheres, dtype=bool)
     inline_history: list[dict] = []
     inline_center_history: list[dict] = []
@@ -1191,6 +1266,18 @@ def main():
             )
             macro_auc_at_best = macro_b
             best_per_digit = per_b
+            if args.strict_paper_reporting:
+                bin_b = evaluate_binary_normal_vs_rest(
+                    model=model,
+                    c_h=c_h,
+                    R=R,
+                    loader=te_loader,
+                    device=device,
+                    curvature=args.curvature,
+                    active_mask=training_active_mask,
+                    normal_digits=train_digits,
+                )
+                binary_auc_at_best = bin_b.get("binary_auc_normal_vs_rest", None)
             torch.save(
                 {
                     "model_state": model.state_dict(),
@@ -1320,6 +1407,19 @@ def main():
     )
     print(f"[v2 UNION test] {union_m}")
     print(f"[v2 EVAL test + active_mask] macro_auc={macro_pruned} (auc_mode={args.auc_mode})")
+    strict_binary_final = None
+    if args.strict_paper_reporting:
+        strict_binary_final = evaluate_binary_normal_vs_rest(
+            model=model,
+            c_h=c_h,
+            R=R,
+            loader=te_loader,
+            device=device,
+            curvature=args.curvature,
+            active_mask=active_mask,
+            normal_digits=train_digits,
+        )
+        print(f"[STRICT] binary normal-vs-rest eval: {strict_binary_final}")
 
     out = {
         "version": 2,
@@ -1361,6 +1461,19 @@ def main():
             "min_members": int(max(1, int(args.inline_split_min_members))),
             "history": inline_split_history,
         },
+        "strict_paper_reporting": {
+            "enabled": bool(args.strict_paper_reporting),
+            "train_normal_digits": train_digits,
+            "test_digits_for_eval": test_digits,
+            "binary_auc_test_at_best_epoch": binary_auc_at_best,
+            "binary_eval_test_pruned_active_spheres": strict_binary_final,
+            "all_normal_mode": bool(set(train_digits) == set(range(10))),
+            "note": (
+                "AUC undefined in all-normal mode; use cluster density/hotspot exports for analysis."
+                if set(train_digits) == set(range(10))
+                else "Binary AUC is computed as normal-set vs rest using union margin."
+            ),
+        },
     }
     with open(os.path.join(args.xp_path, "results.json"), "w", encoding="utf-8") as f:
         json.dump(out, f, indent=2)
@@ -1397,22 +1510,41 @@ def main():
     ):
         if not args.skip_tsne:
             tsne_ds = te if args.tsne_split == "test" else tr
-            out_png = args.tsne_out if args.tsne_out else os.path.join(args.xp_path, "tsne_unsup_v2_nearest_z.png")
-            plot_tsne_unsupervised(
-                model,
-                c_h,
-                R,
-                tsne_ds,
-                device,
-                args.curvature,
-                out_png,
-                max_samples=args.tsne_max_samples,
-                perplexity=args.tsne_perplexity,
-                n_iter=args.tsne_iter,
-                seed=args.tsne_seed,
-                eval_objective=eval_objective,
-                active_cluster_mask=active_mask,
-            )
+            base_out = args.tsne_out if args.tsne_out else os.path.join(args.xp_path, "tsne_unsup_v2_nearest_z.png")
+            raw_views = [s.strip().lower() for s in str(args.tsne_views).split(",") if s.strip()]
+            if not raw_views:
+                raw_views = ["dual"]
+            if "all" in raw_views:
+                views = ["hulls", "union", "paper_occ"]
+            else:
+                views = raw_views
+            valid_views = {"dual", "hulls", "union", "paper_occ"}
+            for v in views:
+                if v not in valid_views:
+                    raise SystemExit(f"--tsne_views contains invalid value: {v!r}; valid={sorted(valid_views)} plus 'all'")
+            for v in views:
+                if v == "dual":
+                    out_png = base_out
+                else:
+                    root, ext = os.path.splitext(base_out)
+                    out_png = f"{root}_{v}{ext or '.png'}"
+                plot_tsne_unsupervised(
+                    model,
+                    c_h,
+                    R,
+                    tsne_ds,
+                    device,
+                    args.curvature,
+                    out_png,
+                    max_samples=args.tsne_max_samples,
+                    perplexity=args.tsne_perplexity,
+                    n_iter=args.tsne_iter,
+                    seed=args.tsne_seed,
+                    eval_objective=eval_objective,
+                    active_cluster_mask=active_mask,
+                    tsne_mode=v,
+                    normal_digits=train_digits,
+                )
         if args.export_cluster_samples > 0:
             raw_base = te_raw if args.cluster_export_split == "test" else tr_raw
             ds_ex = UnsupervisedScaledDataset(raw_base, return_raw=True)

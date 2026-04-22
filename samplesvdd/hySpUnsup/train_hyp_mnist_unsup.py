@@ -278,11 +278,17 @@ def plot_tsne_unsupervised(
     seed: int = 42,
     eval_objective: str = "soft-boundary",
     active_cluster_mask: np.ndarray | None = None,
+    tsne_mode: str = "dual",
+    normal_digits: list[int] | None = None,
 ):
     """
     t-SNE on per-sample hyperbolic embedding from the *nearest* sphere (argmin_k d(z^k, c_k)).
     If active_cluster_mask has False entries, assignment is argmin over **active** k only (pruned heads ignored).
-    Cluster id = k_near (unsupervised). Saves dual panel: (1) clusters + shaded hulls, (2) true digit + in/out union.
+    Cluster id = k_near (unsupervised). By mode:
+      - dual: two panels (clusters+hulls, true digit + union in/out)
+      - hulls: clusters+hulls only
+      - union: true digit + union in/out only
+      - paper_occ: paper-style OCC view (normal-set vs rest + union in/out)
     In/out is always UNION-based: inside iff any active sphere contains the point, i.e.
     min_k(d_h^2(z_k,c_k) - R_k^2) <= 0.
     """
@@ -394,71 +400,116 @@ def plot_tsne_unsupervised(
     cluster_colors = np.array([cmap(i / max(n_clusters, 1))[:3] for i in range(n_clusters)])
     digit_colors = plt.cm.tab10(np.linspace(0, 1, 10))
 
-    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(16, 7))
+    def _plot_hulls(ax):
+        if not collapse_detected:
+            _draw_cluster_hulls_masked(ax, Z2, Kassign, cluster_colors, active_cluster_mask, alpha_fill=0.22)
+        for k in range(n_clusters):
+            m = Kassign == k
+            if not np.any(m):
+                continue
+            col = tuple(cluster_colors[k]) if active_cluster_mask[k] else (0.55, 0.55, 0.55)
+            ax.scatter(
+                Z2[m, 0],
+                Z2[m, 1],
+                s=14,
+                color=col,
+                marker="o",
+                alpha=0.9 if active_cluster_mask[k] else 0.45,
+                edgecolors="k",
+                linewidths=0.2,
+                zorder=3,
+            )
+        leg_c = [
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                color=cluster_colors[j],
+                linestyle="None",
+                markersize=7,
+                label=f"cluster {j}" + ("" if active_cluster_mask[j] else " (pruned)"),
+            )
+            for j in range(n_clusters)
+        ]
+        ax.legend(handles=leg_c, loc="best", fontsize=7, ncol=2, frameon=True)
+        if collapse_detected:
+            ax.set_title(
+                f"t-SNE: nearest-sphere cluster (assignment collapse: k={dominant_cluster}, {dominant_frac*100:.1f}%)"
+            )
+        else:
+            ax.set_title("t-SNE: nearest-sphere cluster (shaded hulls)")
+        ax.set_xlabel("t-SNE-1")
+        ax.set_ylabel("t-SNE-2")
+        ax.set_aspect("equal", adjustable="datalim")
 
-    if not collapse_detected:
-        _draw_cluster_hulls_masked(ax0, Z2, Kassign, cluster_colors, active_cluster_mask, alpha_fill=0.22)
-    for k in range(n_clusters):
-        m = Kassign == k
-        if not np.any(m):
-            continue
-        col = tuple(cluster_colors[k]) if active_cluster_mask[k] else (0.55, 0.55, 0.55)
-        ax0.scatter(
-            Z2[m, 0],
-            Z2[m, 1],
-            s=14,
-            color=col,
-            marker="o",
-            alpha=0.9 if active_cluster_mask[k] else 0.45,
-            edgecolors="k",
-            linewidths=0.2,
-            zorder=3,
-        )
-    leg_c = [
-        Line2D(
-            [0],
-            [0],
-            marker="o",
-            color=cluster_colors[j],
-            linestyle="None",
-            markersize=7,
-            label=f"cluster {j}" + ("" if active_cluster_mask[j] else " (pruned)"),
-        )
-        for j in range(n_clusters)
-    ]
-    ax0.legend(handles=leg_c, loc="best", fontsize=7, ncol=2, frameon=True)
-    if collapse_detected:
-        ax0.set_title(
-            f"t-SNE: nearest-sphere cluster (assignment collapse: k={dominant_cluster}, {dominant_frac*100:.1f}%)"
-        )
+    def _plot_union(ax):
+        for k in range(10):
+            m = D == k
+            if not np.any(m):
+                continue
+            m_in = m & INS
+            m_out = m & (~INS)
+            if np.any(m_in):
+                ax.scatter(Z2[m_in, 0], Z2[m_in, 1], s=12, marker="o", color=digit_colors[k], alpha=0.85)
+            if np.any(m_out):
+                ax.scatter(Z2[m_out, 0], Z2[m_out, 1], s=12, marker="x", color=digit_colors[k], alpha=0.85)
+        leg_digits = [Line2D([0], [0], marker="o", color=digit_colors[j], linestyle="None", markersize=6, label=f"{j}") for j in range(10)]
+        leg_state = [
+            Line2D([0], [0], marker="o", color="gray", linestyle="None", markersize=6, label="in union"),
+            Line2D([0], [0], marker="x", color="gray", linestyle="None", markersize=6, label="outside"),
+        ]
+        leg1 = ax.legend(handles=leg_state, loc="lower right", fontsize=9, frameon=True)
+        leg2 = ax.legend(handles=leg_digits, loc="upper left", fontsize=8, frameon=True, ncol=2)
+        ax.add_artist(leg1)
+        ax.set_title("Same embedding, true digit (eval) + union in/out")
+        ax.set_xlabel("t-SNE-1")
+        ax.set_ylabel("t-SNE-2")
+        ax.set_aspect("equal", adjustable="datalim")
+
+    def _plot_paper_occ(ax):
+        normal_set = set(int(d) for d in (normal_digits or []))
+        if not normal_set:
+            normal_set = set(range(10))
+        m_norm = np.isin(D, np.array(sorted(normal_set)))
+        m_anom = ~m_norm
+        n_in = m_norm & INS
+        n_out = m_norm & (~INS)
+        a_in = m_anom & INS
+        a_out = m_anom & (~INS)
+        if np.any(n_in):
+            ax.scatter(Z2[n_in, 0], Z2[n_in, 1], s=14, marker="o", color="#1f77b4", alpha=0.9)
+        if np.any(n_out):
+            ax.scatter(Z2[n_out, 0], Z2[n_out, 1], s=14, marker="x", color="#1f77b4", alpha=0.9)
+        if np.any(a_in):
+            ax.scatter(Z2[a_in, 0], Z2[a_in, 1], s=14, marker="o", color="#d62728", alpha=0.9)
+        if np.any(a_out):
+            ax.scatter(Z2[a_out, 0], Z2[a_out, 1], s=14, marker="x", color="#d62728", alpha=0.9)
+        leg_label = [
+            Line2D([0], [0], marker="o", color="#1f77b4", linestyle="None", markersize=6, label="normal-set (in)"),
+            Line2D([0], [0], marker="x", color="#1f77b4", linestyle="None", markersize=6, label="normal-set (out)"),
+            Line2D([0], [0], marker="o", color="#d62728", linestyle="None", markersize=6, label="rest (in)"),
+            Line2D([0], [0], marker="x", color="#d62728", linestyle="None", markersize=6, label="rest (out)"),
+        ]
+        ax.legend(handles=leg_label, loc="best", fontsize=8, frameon=True)
+        ax.set_title(f"Paper OCC view: normal={sorted(normal_set)} vs rest (+ union in/out)")
+        ax.set_xlabel("t-SNE-1")
+        ax.set_ylabel("t-SNE-2")
+        ax.set_aspect("equal", adjustable="datalim")
+
+    if tsne_mode == "dual":
+        fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(16, 7))
+        _plot_hulls(ax0)
+        _plot_union(ax1)
     else:
-        ax0.set_title("t-SNE: nearest-sphere cluster (shaded hulls)")
-    ax0.set_xlabel("t-SNE-1")
-    ax0.set_ylabel("t-SNE-2")
-
-    for k in range(10):
-        m = D == k
-        if not np.any(m):
-            continue
-        m_in = m & INS
-        m_out = m & (~INS)
-        if np.any(m_in):
-            ax1.scatter(Z2[m_in, 0], Z2[m_in, 1], s=12, marker="o", color=digit_colors[k], alpha=0.85)
-        if np.any(m_out):
-            ax1.scatter(Z2[m_out, 0], Z2[m_out, 1], s=12, marker="x", color=digit_colors[k], alpha=0.85)
-    leg_digits = [Line2D([0], [0], marker="o", color=digit_colors[j], linestyle="None", markersize=6, label=f"{j}") for j in range(10)]
-    leg_state = [
-        Line2D([0], [0], marker="o", color="gray", linestyle="None", markersize=6, label="in union"),
-        Line2D([0], [0], marker="x", color="gray", linestyle="None", markersize=6, label="outside"),
-    ]
-    leg1 = ax1.legend(handles=leg_state, loc="lower right", fontsize=9, frameon=True)
-    leg2 = ax1.legend(handles=leg_digits, loc="upper left", fontsize=8, frameon=True, ncol=2)
-    ax1.add_artist(leg1)
-    ax1.set_title("Same embedding, true digit (eval) + union in/out")
-    ax1.set_xlabel("t-SNE-1")
-    ax1.set_ylabel("t-SNE-2")
-    ax0.set_aspect("equal", adjustable="datalim")
-    ax1.set_aspect("equal", adjustable="datalim")
+        fig, ax = plt.subplots(1, 1, figsize=(8, 7))
+        if tsne_mode == "hulls":
+            _plot_hulls(ax)
+        elif tsne_mode == "union":
+            _plot_union(ax)
+        elif tsne_mode == "paper_occ":
+            _plot_paper_occ(ax)
+        else:
+            raise ValueError(f"Unknown tsne_mode={tsne_mode!r}")
 
     plt.tight_layout()
     plt.savefig(out_png, dpi=150)
