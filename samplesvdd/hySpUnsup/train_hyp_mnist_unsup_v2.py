@@ -44,6 +44,7 @@ from hyperbolic_multi_sphere import (  # noqa: E402
     svdd_loss_soft_boundary,
     update_radii_unsupervised,
 )
+from hyperbolic_ops import proj_ball  # noqa: E402
 from euclidean_multi_sphere import EuclideanMultiSphereSVDD, dist_sq_to_all_centers_e, init_centers_e  # noqa: E402
 from mnist_local import MNISTDigitsProcessedRawDataset, MNIST_LeNet_SVDDIAE, recon_mse_loss  # noqa: E402
 
@@ -588,6 +589,89 @@ def _write_ae_only_metadata(
         json.dump(out, f, indent=2)
 
 
+def _paper_radius_active_mask(assign_counts: np.ndarray, nu: float) -> np.ndarray:
+    """
+    Paper-style cluster survival rule:
+      keep k iff n_k >= nu * max_j(n_j)
+    """
+    if assign_counts.size == 0:
+        return np.array([], dtype=bool)
+    max_count = int(np.max(assign_counts))
+    if max_count <= 0:
+        active = np.zeros_like(assign_counts, dtype=bool)
+        active[0] = True
+        return active
+    threshold = float(max(0.0, nu)) * float(max_count)
+    active = assign_counts.astype(np.float64) >= threshold
+    if not np.any(active):
+        active[int(np.argmax(assign_counts))] = True
+    return active
+
+
+@torch.no_grad()
+def _recompute_centers_from_train(
+    model,
+    c_h: torch.Tensor,
+    tr_loader: DataLoader,
+    device: torch.device,
+    curvature: float,
+    active_mask: np.ndarray,
+) -> tuple[torch.Tensor, dict]:
+    """
+    Paper-style alternating step: with assignments fixed by nearest active sphere,
+    update each active center to mean of its assigned head-specific embeddings.
+    """
+    model.eval()
+    K = int(c_h.size(0))
+    z_sums = torch.zeros_like(c_h)
+    counts = np.zeros(K, dtype=np.int64)
+    am_t = torch.as_tensor(active_mask, device=device, dtype=torch.bool)
+
+    for x_scaled, _ in tr_loader:
+        x_scaled = x_scaled.to(device)
+        rep, _ = model(x_scaled)
+        z_all = model.project_all_h(rep)
+        dist_sq = _dist_sq_all_for_model(model, z_all, c_h, curvature=curvature)
+        dist_sq = dist_sq.masked_fill(~am_t.unsqueeze(0), float("inf"))
+        k_near = dist_sq.argmin(dim=1)
+        k_np = k_near.detach().cpu().numpy()
+        counts += np.bincount(k_np, minlength=K)
+        b = torch.arange(z_all.size(0), device=device)
+        z_pick = z_all[b, k_near]
+        for k in range(K):
+            m = k_near == k
+            if torch.any(m):
+                z_sums[k] += z_pick[m].sum(dim=0)
+
+    c_new = c_h.clone()
+    for k in range(K):
+        if bool(active_mask[k]) and counts[k] > 0:
+            c_new[k] = z_sums[k] / float(counts[k])
+            if not isinstance(model, EuclideanMultiSphereSVDD):
+                c_new[k] = proj_ball(c_new[k : k + 1], c=curvature).squeeze(0)
+
+    return c_new, {"assign_counts": counts.astype(int).tolist(), "active_cluster_mask": active_mask.astype(bool).tolist()}
+
+
+@torch.no_grad()
+def _init_centers_e_unsupervised(model: EuclideanMultiSphereSVDD, train_loader: DataLoader, device: torch.device) -> torch.Tensor:
+    """
+    Unsupervised Euclidean init: for each head k, center is mean of z_k over all train samples.
+    This avoids label-dependent collapse when training on a subset of digits (e.g., normal_digits=0).
+    """
+    c = torch.zeros((model.n_digits, model.z_dim), device=device)
+    n = 0
+    for x_scaled, _ in train_loader:
+        x_scaled = x_scaled.to(device)
+        rep, _ = model(x_scaled)
+        z_all = model.project_all(rep)  # [B, K, Z]
+        c += z_all.sum(dim=0)
+        n += int(z_all.size(0))
+    if n <= 0:
+        return c
+    return c / float(n)
+
+
 def main():
     default_ae = _HYSP_CHECK / "runs" / "ae_pretrain_mnist" / "ae_stage1.pth"
     p = argparse.ArgumentParser("hySpUnsup v2: unsup multi-sphere + prune + union metrics")
@@ -672,6 +756,22 @@ def main():
     )
     p.add_argument("--hybrid_max_iters", type=int, default=3)
     p.add_argument("--hard_cap_reassign", action="store_true", help="After UB split, hard-cap saturated clusters by rerouting overflow.")
+    p.add_argument(
+        "--inline_radius_prune",
+        action="store_true",
+        help="Paper-style inline cluster shutdown during training: set R_k=0 and deactivate sphere k when n_k < nu*max_j(n_j) each epoch.",
+    )
+    p.add_argument(
+        "--inline_update_centers",
+        action="store_true",
+        help="Paper-style alternating update: recompute active centers from nearest-sphere assignments during training.",
+    )
+    p.add_argument(
+        "--inline_update_centers_every",
+        type=int,
+        default=1,
+        help="Apply inline center refresh every N epochs when --inline_update_centers is enabled.",
+    )
     p.add_argument(
         "--chaos_factor",
         type=float,
@@ -809,9 +909,11 @@ def main():
             print("[AE] ae_only=True; exiting before SVDD stage.")
             return
 
-    c_h = init_centers_h_unsupervised(model, tr_loader, device=device) if args.geometry == "hyperbolic" else init_centers_e(model, tr_loader, device=device)
+    if args.geometry == "hyperbolic":
+        c_h = init_centers_h_unsupervised(model, tr_loader, device=device)
+    else:
+        c_h = _init_centers_e_unsupervised(model, tr_loader, device=device)
     R = torch.zeros((args.n_spheres,), device=device)
-    full_active_mask = np.ones(args.n_spheres, dtype=bool)
 
     opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     eval_objective = "soft-boundary" if args.objective == "union-soft" else "one-class"
@@ -819,6 +921,9 @@ def main():
     best_epoch = -1
     macro_auc_at_best = float("nan")
     best_per_digit = {}
+    training_active_mask = np.ones(args.n_spheres, dtype=bool)
+    inline_history: list[dict] = []
+    inline_center_history: list[dict] = []
 
     for ep in range(1, args.svdd_n_epochs + 1):
         model.train()
@@ -827,15 +932,19 @@ def main():
         svdd_losses = []
         ov_losses = []
         dist_sq_chunks = [[] for _ in range(args.n_spheres)]
+        assign_counts = np.zeros(args.n_spheres, dtype=np.int64)
 
         for x_scaled, _digits_b in tr_loader:
             x_scaled = x_scaled.to(device)
             rep, recon = model(x_scaled)
             z_all_h = model.project_all_h(rep)
             dist_sq_all = dist_fn(z_all_h, c_h, curvature=args.curvature)
+            am_train = torch.as_tensor(training_active_mask, device=device, dtype=torch.bool)
+            dist_sq_all = dist_sq_all.masked_fill(~am_train.unsqueeze(0), float("inf"))
             rec = recon_mse_loss(recon, x_scaled)
 
             min_sq, k_idx = dist_sq_all.min(dim=1)
+            assign_counts += np.bincount(k_idx.detach().cpu().numpy(), minlength=args.n_spheres)
             if args.objective == "union-one":
                 sv = svdd_loss_one_class(min_sq)
             else:
@@ -861,6 +970,32 @@ def main():
 
         if args.objective == "union-soft" and ep > args.warm_up_n_epochs:
             R = update_radii_unsupervised(dist_sq_chunks, nu=args.nu, device=torch.device("cpu")).to(device)
+            if args.inline_radius_prune:
+                training_active_mask = _paper_radius_active_mask(assign_counts, args.nu)
+                R = R.masked_fill(~torch.as_tensor(training_active_mask, device=device, dtype=torch.bool), 0.0)
+        elif args.inline_radius_prune:
+            training_active_mask = _paper_radius_active_mask(assign_counts, args.nu)
+
+        if args.inline_update_centers and ((ep % max(1, int(args.inline_update_centers_every))) == 0):
+            c_h, center_info = _recompute_centers_from_train(
+                model=model,
+                c_h=c_h,
+                tr_loader=tr_loader,
+                device=device,
+                curvature=args.curvature,
+                active_mask=training_active_mask,
+            )
+            center_info["epoch"] = int(ep)
+            inline_center_history.append(center_info)
+
+        if args.inline_radius_prune:
+            inline_history.append(
+                {
+                    "epoch": int(ep),
+                    "assign_counts": assign_counts.astype(int).tolist(),
+                    "active_cluster_mask": training_active_mask.astype(bool).tolist(),
+                }
+            )
 
         epoch_loss_mean = float(np.mean(losses))
         print(
@@ -868,6 +1003,11 @@ def main():
             f"loss={epoch_loss_mean:.6f} rec={np.mean(rec_losses):.6f} svdd={np.mean(svdd_losses):.6f} "
             f"overlap={np.mean(ov_losses):.6f} R_mean={float(R.mean().item()):.4f}"
         )
+        if args.inline_radius_prune:
+            print(
+                f"[INLINE-PRUNE] active spheres: {training_active_mask.astype(np.int32).tolist()} "
+                f"({int(training_active_mask.sum())}/{args.n_spheres})"
+            )
 
         if epoch_loss_mean < best_train_loss:
             best_train_loss = epoch_loss_mean
@@ -880,7 +1020,7 @@ def main():
                 device,
                 eval_objective,
                 args.curvature,
-                active_cluster_mask=full_active_mask,
+                active_cluster_mask=training_active_mask,
                 auc_mode=args.auc_mode,
             )
             macro_auc_at_best = macro_b
@@ -900,6 +1040,7 @@ def main():
                     "version": 2,
                     "best_training_loss": best_train_loss,
                     "best_epoch": best_epoch,
+                    "active_cluster_mask": training_active_mask.tolist(),
                 },
                 os.path.join(args.xp_path, "checkpoint_best.pth"),
             )
@@ -916,7 +1057,7 @@ def main():
                 device,
                 eval_objective,
                 args.curvature,
-                active_cluster_mask=full_active_mask,
+                active_cluster_mask=training_active_mask,
                 auc_mode=args.auc_mode,
             )
             print(f"[EVAL] epoch={ep:03d} macro_auc={macro} (auc_mode={args.auc_mode}; monitoring)")
@@ -933,6 +1074,7 @@ def main():
                 "objective": args.objective,
                 "unsupervised": True,
                 "version": 2,
+                "active_cluster_mask": training_active_mask.tolist(),
             },
             os.path.join(args.xp_path, "checkpoint_latest.pth"),
         )
@@ -943,6 +1085,8 @@ def main():
         model.load_state_dict(ck["model_state"], strict=True)
         c_h = ck["c_h"].to(device)
         R = ck["R"].to(device)
+        if "active_cluster_mask" in ck:
+            training_active_mask = np.asarray(ck["active_cluster_mask"], dtype=bool)
 
     active_mask, prune_info = prune_spheres_from_train(
         model,
@@ -956,6 +1100,11 @@ def main():
         silhouette_max_samples=args.silhouette_max_samples,
         silhouette_seed=args.silhouette_seed,
     )
+    active_mask = np.logical_and(active_mask, training_active_mask)
+    if not np.any(active_mask):
+        active_mask[int(np.argmax(training_active_mask.astype(np.int32)))] = True
+    prune_info["inline_active_cluster_mask"] = training_active_mask.astype(bool).tolist()
+    prune_info["active_cluster_mask_after_inline_and_prune"] = active_mask.astype(bool).tolist()
     c_h, R, active_mask, split_info = split_overloaded_active_spheres(
         model,
         c_h,
@@ -1027,6 +1176,15 @@ def main():
         "split_overloaded": split_info,
         "hybrid_rebalance": hybrid_info,
         "union_test_metrics_active_spheres": union_m,
+        "inline_radius_prune": {
+            "enabled": bool(args.inline_radius_prune),
+            "history": inline_history,
+        },
+        "inline_center_update": {
+            "enabled": bool(args.inline_update_centers),
+            "every_n_epochs": int(max(1, int(args.inline_update_centers_every))),
+            "history": inline_center_history,
+        },
     }
     with open(os.path.join(args.xp_path, "results.json"), "w", encoding="utf-8") as f:
         json.dump(out, f, indent=2)

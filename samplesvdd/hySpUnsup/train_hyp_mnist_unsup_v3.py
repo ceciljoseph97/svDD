@@ -2,7 +2,9 @@
 v3 entrypoint: unsupervised hyperbolic multi-sphere with bottom-up agglomerative init.
 
 Defaults over v2:
-- enables `--hybrid_rebalance` and `--hard_cap_reassign`
+- enables inline paper-style training dynamics:
+  - `--inline_radius_prune`
+  - `--inline_update_centers`
 - uses agglomerative (bottom-up) cluster-based center initialization by default
 - keeps v2 behavior otherwise (same args, checkpoints, exports)
 """
@@ -108,11 +110,11 @@ def main() -> None:
         except Exception:
             geometry = "hyperbolic"
 
-    # v3 defaults: turn on hybrid rebalance and hard-cap unless user explicitly sets them.
-    if "--hybrid_rebalance" not in sys.argv:
-        sys.argv.append("--hybrid_rebalance")
-    if "--hard_cap_reassign" not in sys.argv:
-        sys.argv.append("--hard_cap_reassign")
+    # v3 defaults: turn on inline paper-style dynamics unless user explicitly sets them.
+    if "--inline_radius_prune" not in sys.argv:
+        sys.argv.append("--inline_radius_prune")
+    if "--inline_update_centers" not in sys.argv:
+        sys.argv.append("--inline_update_centers")
 
     if geometry == "euclidean":
         print("[v3] geometry=euclidean; agglomerative hyperbolic init is disabled")
