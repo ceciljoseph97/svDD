@@ -44,7 +44,7 @@ from hyperbolic_multi_sphere import (  # noqa: E402
     svdd_loss_soft_boundary,
     update_radii_unsupervised,
 )
-from hyperbolic_ops import proj_ball  # noqa: E402
+from hyperbolic_ops import hyp_distance, proj_ball  # noqa: E402
 from euclidean_multi_sphere import EuclideanMultiSphereSVDD, dist_sq_to_all_centers_e, init_centers_e  # noqa: E402
 from mnist_local import MNISTDigitsProcessedRawDataset, MNIST_LeNet_SVDDIAE, recon_mse_loss  # noqa: E402
 
@@ -672,6 +672,139 @@ def _init_centers_e_unsupervised(model: EuclideanMultiSphereSVDD, train_loader: 
     return c / float(n)
 
 
+@torch.no_grad()
+def _inline_inverse_distance_split(
+    model,
+    c_h: torch.Tensor,
+    R: torch.Tensor,
+    tr_loader: DataLoader,
+    device: torch.device,
+    curvature: float,
+    active_mask: np.ndarray,
+    threshold: float,
+    min_members: int,
+    max_splits: int,
+    seed: int,
+    eps: float,
+    nu: float,
+) -> tuple[torch.Tensor, torch.Tensor, np.ndarray, dict]:
+    info: dict = {
+        "enabled": bool(np.isfinite(threshold)),
+        "threshold": float(threshold),
+        "min_members": int(min_members),
+        "max_splits": int(max_splits),
+        "applied": False,
+        "splits": [],
+    }
+    if (not np.isfinite(threshold)) or threshold <= 0 or max_splits <= 0:
+        return c_h, R, active_mask, info
+
+    model.eval()
+    z_parts: list[np.ndarray] = []
+    k_parts: list[np.ndarray] = []
+    d_parts: list[np.ndarray] = []
+    am_t = torch.as_tensor(active_mask, device=device, dtype=torch.bool)
+
+    for x_scaled, _ in tr_loader:
+        x_scaled = x_scaled.to(device)
+        rep, _ = model(x_scaled)
+        z_all = model.project_all_h(rep)
+        dist_sq = _dist_sq_all_for_model(model, z_all, c_h, curvature=curvature)
+        dist_sq = dist_sq.masked_fill(~am_t.unsqueeze(0), float("inf"))
+        k_near = dist_sq.argmin(dim=1)
+        b = torch.arange(z_all.size(0), device=device)
+        z_pick = z_all[b, k_near]
+        d_pick = dist_sq[b, k_near]
+        z_parts.append(z_pick.detach().cpu().numpy())
+        k_parts.append(k_near.detach().cpu().numpy())
+        d_parts.append(d_pick.detach().cpu().numpy())
+
+    if not z_parts:
+        return c_h, R, active_mask, info
+
+    Z = np.concatenate(z_parts, axis=0)
+    K = np.concatenate(k_parts, axis=0)
+    D = np.concatenate(d_parts, axis=0)
+
+    K_total = int(c_h.size(0))
+    counts = np.bincount(K, minlength=K_total)
+    score = np.zeros(K_total, dtype=np.float64)
+    for k in range(K_total):
+        mk = K == k
+        if np.any(mk):
+            d = np.maximum(D[mk], float(eps))
+            score[k] = float(np.mean(1.0 / np.sqrt(d)))
+        else:
+            score[k] = 0.0
+
+    spare = [k for k in range(K_total) if not bool(active_mask[k])]
+    candidates = [k for k in range(K_total) if bool(active_mask[k]) and int(counts[k]) >= int(min_members) and float(score[k]) > float(threshold)]
+    candidates = sorted(candidates, key=lambda k: float(score[k]), reverse=True)
+    info["counts_before"] = counts.astype(int).tolist()
+    info["inverse_distance_score"] = {str(k): float(score[k]) for k in range(K_total)}
+    info["candidates"] = [int(k) for k in candidates]
+    info["spare_inactive"] = [int(k) for k in spare]
+    if not candidates or not spare:
+        return c_h, R, active_mask, info
+
+    c_new = c_h.clone()
+    R_new = R.clone()
+    a_new = active_mask.copy()
+    rng = np.random.RandomState(seed)
+    splits_done = 0
+
+    for src in candidates:
+        if splits_done >= int(max_splits) or not spare:
+            break
+        mk = K == src
+        Zk = Z[mk]
+        if Zk.shape[0] < max(2 * int(min_members), 8):
+            continue
+        km = KMeans(n_clusters=2, random_state=int(rng.randint(0, 1_000_000)), n_init=10)
+        labels = km.fit_predict(Zk)
+        n0 = int(np.sum(labels == 0))
+        n1 = int(np.sum(labels == 1))
+        if min(n0, n1) < max(1, int(min_members // 4)):
+            continue
+
+        child = int(spare.pop(0))
+        z0 = torch.from_numpy(Zk[labels == 0]).to(device=device, dtype=c_h.dtype)
+        z1 = torch.from_numpy(Zk[labels == 1]).to(device=device, dtype=c_h.dtype)
+        c0 = z0.mean(dim=0)
+        c1 = z1.mean(dim=0)
+        if not isinstance(model, EuclideanMultiSphereSVDD):
+            c0 = proj_ball(c0.unsqueeze(0), c=curvature).squeeze(0)
+            c1 = proj_ball(c1.unsqueeze(0), c=curvature).squeeze(0)
+        c_new[src] = c0
+        c_new[child] = c1
+        a_new[child] = True
+
+        if isinstance(model, EuclideanMultiSphereSVDD):
+            d0 = ((z0 - c0.unsqueeze(0)) ** 2).sum(dim=1)
+            d1 = ((z1 - c1.unsqueeze(0)) ** 2).sum(dim=1)
+        else:
+            d0 = hyp_distance(z0, c0.unsqueeze(0).expand_as(z0), c=curvature) ** 2
+            d1 = hyp_distance(z1, c1.unsqueeze(0).expand_as(z1), c=curvature) ** 2
+        q = float(max(0.0, min(1.0, 1.0 - float(nu))))
+        R_new[src] = torch.sqrt(torch.quantile(d0, q=q).clamp_min(0.0))
+        R_new[child] = torch.sqrt(torch.quantile(d1, q=q).clamp_min(0.0))
+
+        splits_done += 1
+        info["splits"].append(
+            {
+                "source_cluster": int(src),
+                "new_cluster": int(child),
+                "source_count": int(counts[src]),
+                "split_counts": [n0, n1],
+                "inverse_distance_score": float(score[src]),
+            }
+        )
+
+    info["applied"] = bool(splits_done > 0)
+    info["n_splits"] = int(splits_done)
+    return c_new, R_new, a_new, info
+
+
 def main():
     default_ae = _HYSP_CHECK / "runs" / "ae_pretrain_mnist" / "ae_stage1.pth"
     p = argparse.ArgumentParser("hySpUnsup v2: unsup multi-sphere + prune + union metrics")
@@ -772,6 +905,17 @@ def main():
         default=1,
         help="Apply inline center refresh every N epochs when --inline_update_centers is enabled.",
     )
+    p.add_argument(
+        "--inline_split_inverse_distance_threshold",
+        type=float,
+        default=float("inf"),
+        help="Inline split trigger: split active cluster k if mean(1/sqrt(d_k+eps)) exceeds this threshold. Set finite value to enable.",
+    )
+    p.add_argument("--inline_split_min_members", type=int, default=128, help="Minimum members required for an inline split candidate.")
+    p.add_argument("--inline_split_max_per_epoch", type=int, default=1, help="Maximum number of inline splits per epoch.")
+    p.add_argument("--inline_split_every", type=int, default=1, help="Apply inline split every N epochs.")
+    p.add_argument("--inline_split_seed", type=int, default=42)
+    p.add_argument("--inline_split_eps", type=float, default=1e-8)
     p.add_argument(
         "--chaos_factor",
         type=float,
@@ -924,6 +1068,7 @@ def main():
     training_active_mask = np.ones(args.n_spheres, dtype=bool)
     inline_history: list[dict] = []
     inline_center_history: list[dict] = []
+    inline_split_history: list[dict] = []
 
     for ep in range(1, args.svdd_n_epochs + 1):
         model.train()
@@ -987,6 +1132,27 @@ def main():
             )
             center_info["epoch"] = int(ep)
             inline_center_history.append(center_info)
+
+        if (ep % max(1, int(args.inline_split_every))) == 0:
+            c_h, R, training_active_mask, split_inline_info = _inline_inverse_distance_split(
+                model=model,
+                c_h=c_h,
+                R=R,
+                tr_loader=tr_loader,
+                device=device,
+                curvature=args.curvature,
+                active_mask=training_active_mask,
+                threshold=float(args.inline_split_inverse_distance_threshold),
+                min_members=int(max(1, args.inline_split_min_members)),
+                max_splits=int(max(0, args.inline_split_max_per_epoch)),
+                seed=int(args.inline_split_seed + ep),
+                eps=float(max(args.inline_split_eps, 1e-12)),
+                nu=float(args.nu),
+            )
+            split_inline_info["epoch"] = int(ep)
+            inline_split_history.append(split_inline_info)
+            if split_inline_info.get("applied", False):
+                print(f"[INLINE-SPLIT] epoch={ep:03d} splits={split_inline_info.get('n_splits', 0)}")
 
         if args.inline_radius_prune:
             inline_history.append(
@@ -1184,6 +1350,16 @@ def main():
             "enabled": bool(args.inline_update_centers),
             "every_n_epochs": int(max(1, int(args.inline_update_centers_every))),
             "history": inline_center_history,
+        },
+        "inline_inverse_distance_split": {
+            "enabled": bool(np.isfinite(args.inline_split_inverse_distance_threshold)),
+            "threshold": None
+            if not np.isfinite(args.inline_split_inverse_distance_threshold)
+            else float(args.inline_split_inverse_distance_threshold),
+            "every_n_epochs": int(max(1, int(args.inline_split_every))),
+            "max_per_epoch": int(max(0, int(args.inline_split_max_per_epoch))),
+            "min_members": int(max(1, int(args.inline_split_min_members))),
+            "history": inline_split_history,
         },
     }
     with open(os.path.join(args.xp_path, "results.json"), "w", encoding="utf-8") as f:

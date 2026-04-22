@@ -1,0 +1,161 @@
+{
+  "split": "test",
+  "max_samples_per_cluster": 50,
+  "saliency_target": "min_k (d_h^2(z_k,c_k) - R_k^2) over active k w.r.t. scaled input x (union SVDD margin; same as evaluate auc_mode=union)",
+  "active_cluster_mask": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    false,
+    true,
+    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    true,
+    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    true,
+    true
+  ],
+  "activation": "mean |LeakyReLU(BN(conv2(x)))| over channels, bilinear upsample to input size",
+  "nearest_sphere_assignment": "active_argmin",
+  "clusters": {
+    "0": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 412
+    },
+    "1": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 437
+    },
+    "2": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 2759
+    },
+    "3": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 252
+    },
+    "4": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 360
+    },
+    "5": {
+      "n_used": 0,
+      "n_available_nearest_sphere": 0
+    },
+    "6": {
+      "n_used": 0,
+      "n_available_nearest_sphere": 0
+    },
+    "7": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 736
+    },
+    "8": {
+      "n_used": 0,
+      "n_available_nearest_sphere": 0
+    },
+    "9": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 538
+    },
+    "10": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 345
+    },
+    "11": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 323
+    },
+    "12": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 766
+    },
+    "13": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 1401
+    },
+    "14": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 138
+    },
+    "15": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 255
+    },
+    "16": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 184
+    },
+    "17": {
+      "n_used": 0,
+      "n_available_nearest_sphere": 0
+    },
+    "18": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 322
+    },
+    "19": {
+      "n_used": 0,
+      "n_available_nearest_sphere": 0
+    },
+    "20": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 338
+    },
+    "21": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 747
+    },
+    "22": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 1095
+    },
+    "23": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 258
+    },
+    "24": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 849
+    },
+    "25": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 336
+    },
+    "26": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 688
+    },
+    "27": {
+      "n_used": 0,
+      "n_available_nearest_sphere": 0
+    },
+    "28": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 224
+    },
+    "29": {
+      "n_used": 50,
+      "n_available_nearest_sphere": 192
+    }
+  }
+}
