@@ -10,6 +10,7 @@ GEOMETRIES=("euclidean")
 
 DEVICE="cuda"
 SVDD_EPOCHS=100
+AE_EPOCHS=200
 EXPORT_SAMPLES=20
 EXPORT_SPLIT="test"
 EXPORT_SEED=42
@@ -37,6 +38,8 @@ mkdir -p "$RUNROOT_HYP" "$RUNROOT_EUC"
 
 run_exp() {
   local xp_path="$1"
+  local ae_ckpt="$2"
+  shift
   shift
   local results_json="${xp_path}/results.json"
 
@@ -58,7 +61,8 @@ run_exp() {
     --mnist_processed_dir "$DATA" \
     --xp_path "$xp_path" \
     --skip_ae_pretrain \
-    --ae_stage1_checkpoint_path "$AECKPT" \
+    --ae_stage1_checkpoint_path "$ae_ckpt" \
+    --ae_stage1_fallback_checkpoint_path "$AECKPT" \
     --geometry "$CURRENT_GEOMETRY" \
     --device "$DEVICE" \
     --svdd_n_epochs "$SVDD_EPOCHS" \
@@ -76,6 +80,32 @@ run_exp() {
     --inline_split_max_per_epoch 1 \
     --inline_split_every 1 \
     "$@"
+}
+
+run_ae_pretrain_case() {
+  local normal="$1"
+  local normal_root="$2"
+  local ae_ckpt="$3"
+  local ae_meta="${normal_root}/ae_pretrain/results_ae_only.json"
+  if [[ -f "$ae_ckpt" || -f "$ae_meta" ]]; then
+    echo "[AE] Skipping pretrain for normal=${normal}; checkpoint/meta already exists."
+    return 0
+  fi
+  echo
+  echo "============================================================"
+  echo "Running AE pretrain for normal=${normal}"
+  echo "Saving checkpoint: ${ae_ckpt}"
+  echo "============================================================"
+  python "$SCRIPT" \
+    --mnist_processed_dir "$DATA" \
+    --xp_path "${normal_root}/ae_pretrain" \
+    --geometry "$CURRENT_GEOMETRY" \
+    --device "$DEVICE" \
+    --ae_n_epochs "$AE_EPOCHS" \
+    --save_ae_stage1_checkpoint_path "$ae_ckpt" \
+    --ae_only \
+    --normal_digits "$normal" \
+    --digits all
 }
 
 for GEOM in "${GEOMETRIES[@]}"; do
@@ -96,9 +126,11 @@ for GEOM in "${GEOMETRIES[@]}"; do
     fi
     NORMAL_ROOT="$CURRENT_RUNROOT/norm_${NORMAL_TAG}"
     mkdir -p "$NORMAL_ROOT"
-    echo ">>> Normal digits sweep set: ${NORMAL} (tag: ${NORMAL_TAG})"
+    echo ">>> Normal digits run set: ${NORMAL} (tag: ${NORMAL_TAG})"
+    AE_CASE_CKPT="$NORMAL_ROOT/ae_stage1_ep${AE_EPOCHS}.pth"
+    run_ae_pretrain_case "$NORMAL" "$NORMAL_ROOT" "$AE_CASE_CKPT"
 
-    run_exp "$NORMAL_ROOT/base" \
+    run_exp "$NORMAL_ROOT/base" "$AE_CASE_CKPT" \
     --n_spheres "$BASE_N_SPHERES" \
     --normal_digits "$NORMAL" \
     --digits all \
@@ -111,5 +143,5 @@ for GEOM in "${GEOMETRIES[@]}"; do
 done
 
 echo
-echo "All normal-case runs finished for hyperbolic + euclidean."
-echo "Runs saved under: $RUNROOT_HYP and $RUNROOT_EUC"
+echo "All normal-case runs finished."
+echo "Runs saved under: $RUNROOT_EUC"

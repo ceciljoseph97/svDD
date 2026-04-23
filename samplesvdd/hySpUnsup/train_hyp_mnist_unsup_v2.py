@@ -77,6 +77,11 @@ def _dist_sq_all_for_model(model, z_all, c_h, curvature: float):
     return dist_sq_to_all_centers(z_all, c_h, curvature=curvature)
 
 
+def _effective_radii(R: torch.Tensor, radius_shrink: float) -> torch.Tensor:
+    """Inference/training boundary radii after optional shrink."""
+    return torch.clamp(R * float(max(0.0, radius_shrink)), min=0.0)
+
+
 @torch.no_grad()
 def prune_spheres_from_train(
     model: HyperbolicMultiSphereSVDD,
@@ -162,6 +167,7 @@ def union_metrics_test(
     device: torch.device,
     curvature: float,
     active_mask: np.ndarray,
+    radius_shrink: float = 1.0,
 ) -> dict:
     """min over active spheres of (d^2 - R^2); frac with min <= 0."""
     model.eval()
@@ -171,7 +177,8 @@ def union_metrics_test(
         rep, _ = model(x_scaled)
         z_all = model.project_all_h(rep)
         dist_sq = _dist_sq_all_for_model(model, z_all, c_h, curvature=curvature)
-        margin = dist_sq - (R.unsqueeze(0) ** 2)
+        R_eff = _effective_radii(R, radius_shrink)
+        margin = dist_sq - (R_eff.unsqueeze(0) ** 2)
         am = torch.as_tensor(active_mask, device=device, dtype=torch.bool)
         margin = margin.masked_fill(~am.unsqueeze(0), float("inf"))
         u = margin.min(dim=1).values
@@ -195,6 +202,7 @@ def evaluate_binary_normal_vs_rest(
     curvature: float,
     active_mask: np.ndarray,
     normal_digits: list[int],
+    radius_shrink: float = 1.0,
 ) -> dict:
     """
     Strict paper-style binary evaluation:
@@ -212,7 +220,8 @@ def evaluate_binary_normal_vs_rest(
         rep, _ = model(x_scaled)
         z_all = model.project_all_h(rep)
         dist_sq = _dist_sq_all_for_model(model, z_all, c_h, curvature=curvature)
-        margin = dist_sq - (R.unsqueeze(0) ** 2)
+        R_eff = _effective_radii(R, radius_shrink)
+        margin = dist_sq - (R_eff.unsqueeze(0) ** 2)
         margin = margin.masked_fill(~am.unsqueeze(0), float("inf"))
         union_score = margin.min(dim=1).values.detach().cpu().numpy()
         d_np = digits.detach().cpu().numpy().astype(int)
@@ -649,6 +658,13 @@ def _write_ae_only_metadata(
         json.dump(out, f, indent=2)
 
 
+def _normal_tag_from_digits(digits: list[int]) -> str:
+    d = sorted(set(int(x) for x in digits))
+    if d == list(range(10)):
+        return "all"
+    return "".join(str(x) for x in d)
+
+
 def _paper_radius_active_mask(assign_counts: np.ndarray, nu: float) -> np.ndarray:
     """
     Paper-style cluster survival rule:
@@ -904,11 +920,65 @@ def main():
     p.add_argument("--lambda_svdd", type=float, default=5e-5)
     p.add_argument("--lambda_overlap", type=float, default=1e-2)
     p.add_argument("--margin_overlap", type=float, default=0.05)
+    p.add_argument(
+        "--radius_shrink",
+        type=float,
+        default=1.0,
+        help="Scale factor applied to radii for boundary-based loss/eval (e.g. 0.9 tightens OCC boundary).",
+    )
+    p.add_argument(
+        "--lambda_inside",
+        type=float,
+        default=0.0,
+        help="Optional penalty weight to push normal train samples deeper inside spheres (tighter OCC boundary).",
+    )
+    p.add_argument(
+        "--inside_margin",
+        type=float,
+        default=0.0,
+        help="Margin used by inside penalty. For union-soft, target is d^2 <= (R - inside_margin)^2.",
+    )
+    p.add_argument(
+        "--lambda_assign_gap",
+        type=float,
+        default=0.0,
+        help="Penalty weight for nearest-vs-second-nearest separation; higher encourages cleaner cluster ownership.",
+    )
+    p.add_argument(
+        "--assign_gap_margin",
+        type=float,
+        default=0.05,
+        help="Target margin on (d2 - d1) using active spheres; penalty is relu(margin - (d2-d1)).",
+    )
+    p.add_argument(
+        "--lambda_assign_entropy",
+        type=float,
+        default=0.0,
+        help="Penalty weight on soft assignment entropy across active spheres (lower entropy -> less mixed clusters).",
+    )
+    p.add_argument(
+        "--assign_entropy_temp",
+        type=float,
+        default=0.5,
+        help="Temperature for assignment entropy softmax over -distance.",
+    )
     p.add_argument("--warm_up_n_epochs", type=int, default=5)
     p.add_argument("--eval_every", type=int, default=5)
     p.add_argument("--skip_ae_pretrain", action="store_true")
     p.add_argument("--ae_only", action="store_true", help="Run/load stage-1 AE only, then exit before any SVDD training.")
     p.add_argument("--ae_stage1_checkpoint_path", type=str, default=str(default_ae))
+    p.add_argument(
+        "--ae_stage1_checkpoint_template",
+        type=str,
+        default=None,
+        help="Optional template for loading AE checkpoint in skip mode (e.g. .../norm_{normal_tag}/ae_stage1_ep200.pth). {normal_tag} is derived from --normal_digits.",
+    )
+    p.add_argument(
+        "--ae_stage1_fallback_checkpoint_path",
+        type=str,
+        default=None,
+        help="Optional fallback AE checkpoint if template/specified path is missing (useful for adapting old shared pretrains).",
+    )
     p.add_argument("--save_ae_stage1_checkpoint_path", type=str, default=None)
     p.add_argument("--skip_tsne", action="store_true")
     p.add_argument("--tsne_split", type=str, default="test", choices=["train", "test"])
@@ -1027,6 +1097,7 @@ def main():
     device = torch.device(args.device)
     test_digits = _parse_digit_list(args.digits, "--digits")
     train_digits = _parse_digit_list(args.normal_digits, "--normal_digits") if args.normal_digits else list(test_digits)
+    normal_tag = _normal_tag_from_digits(train_digits)
     if args.strict_paper_reporting and args.normal_digits:
         test_digits = list(range(10))
         print("[STRICT] strict_paper_reporting=True -> forcing test digits to all (0..9)")
@@ -1070,6 +1141,17 @@ def main():
 
     if args.skip_ae_pretrain:
         ckpt_path = args.ae_stage1_checkpoint_path
+        template_path = None
+        if args.ae_stage1_checkpoint_template:
+            template_path = args.ae_stage1_checkpoint_template.format(normal_tag=normal_tag)
+            if os.path.isfile(template_path):
+                ckpt_path = template_path
+                print(f"[AE] using per-normal checkpoint from template: {template_path}")
+        if (not ckpt_path or not os.path.isfile(ckpt_path)) and args.ae_stage1_fallback_checkpoint_path:
+            fb = args.ae_stage1_fallback_checkpoint_path
+            if os.path.isfile(fb):
+                ckpt_path = fb
+                print(f"[AE] using fallback checkpoint: {fb}")
         if not ckpt_path or not os.path.isfile(ckpt_path):
             raise SystemExit(f"--skip_ae_pretrain requires a valid --ae_stage1_checkpoint_path (got {ckpt_path!r})")
         ae_ckpt = torch.load(ckpt_path, map_location="cpu")
@@ -1151,6 +1233,9 @@ def main():
         rec_losses = []
         svdd_losses = []
         ov_losses = []
+        in_losses = []
+        gap_losses = []
+        ent_losses = []
         dist_sq_chunks = [[] for _ in range(args.n_spheres)]
         assign_counts = np.zeros(args.n_spheres, dtype=np.int64)
 
@@ -1168,11 +1253,43 @@ def main():
             if args.objective == "union-one":
                 sv = svdd_loss_one_class(min_sq)
             else:
-                R_sel = R[k_idx]
+                R_eff_all = _effective_radii(R, args.radius_shrink)
+                R_sel = R_eff_all[k_idx]
                 sv = svdd_loss_soft_boundary(min_sq, R_sel, nu=args.nu)
 
             ov = overlap_fn(c_h, R, curvature=args.curvature, margin=args.margin_overlap)
-            loss = rec + args.lambda_svdd * sv + args.lambda_overlap * ov
+            if args.objective == "union-soft":
+                R_eff = torch.clamp(R_sel - float(max(0.0, args.inside_margin)), min=0.0)
+                inside_pen = torch.relu(min_sq - (R_eff ** 2)).mean()
+            else:
+                tau_sq = float(max(0.0, args.inside_margin)) ** 2
+                inside_pen = torch.relu(min_sq - tau_sq).mean()
+
+            active_idx = torch.where(am_train)[0]
+            gap_pen = torch.tensor(0.0, device=device)
+            ent_pen = torch.tensor(0.0, device=device)
+            if active_idx.numel() >= 2:
+                dist_active = dist_sq_all[:, active_idx]
+                d_sorted, _ = torch.sort(dist_active, dim=1)
+                d1 = d_sorted[:, 0]
+                d2 = d_sorted[:, 1]
+                gap = d2 - d1
+                gap_pen = torch.relu(float(max(0.0, args.assign_gap_margin)) - gap).mean()
+
+                temp = float(max(args.assign_entropy_temp, 1e-6))
+                logits = -dist_active / temp
+                p_assign = torch.softmax(logits, dim=1)
+                ent = -(p_assign * torch.log(p_assign.clamp_min(1e-12))).sum(dim=1)
+                ent_pen = ent.mean()
+
+            loss = (
+                rec
+                + args.lambda_svdd * sv
+                + args.lambda_overlap * ov
+                + args.lambda_inside * inside_pen
+                + args.lambda_assign_gap * gap_pen
+                + args.lambda_assign_entropy * ent_pen
+            )
             opt.zero_grad()
             loss.backward()
             opt.step()
@@ -1180,6 +1297,9 @@ def main():
             rec_losses.append(float(rec.item()))
             svdd_losses.append(float(sv.item()))
             ov_losses.append(float(ov.item()))
+            in_losses.append(float(inside_pen.item()))
+            gap_losses.append(float(gap_pen.item()))
+            ent_losses.append(float(ent_pen.item()))
 
             if args.objective == "union-soft" and ep > args.warm_up_n_epochs:
                 with torch.no_grad():
@@ -1242,7 +1362,9 @@ def main():
         print(
             f"[SVDD-H-UNSUP-v2] {ep:03d}/{args.svdd_n_epochs} "
             f"loss={epoch_loss_mean:.6f} rec={np.mean(rec_losses):.6f} svdd={np.mean(svdd_losses):.6f} "
-            f"overlap={np.mean(ov_losses):.6f} R_mean={float(R.mean().item()):.4f}"
+            f"overlap={np.mean(ov_losses):.6f} inside={np.mean(in_losses):.6f} "
+            f"assign_gap={np.mean(gap_losses):.6f} assign_ent={np.mean(ent_losses):.6f} "
+            f"R_mean={float(R.mean().item()):.4f}"
         )
         if args.inline_radius_prune:
             print(
@@ -1256,7 +1378,7 @@ def main():
             macro_b, per_b = evaluate(
                 model,
                 c_h,
-                R,
+                _effective_radii(R, args.radius_shrink),
                 te_loader,
                 device,
                 eval_objective,
@@ -1270,12 +1392,13 @@ def main():
                 bin_b = evaluate_binary_normal_vs_rest(
                     model=model,
                     c_h=c_h,
-                    R=R,
+                    R=_effective_radii(R, args.radius_shrink),
                     loader=te_loader,
                     device=device,
                     curvature=args.curvature,
                     active_mask=training_active_mask,
                     normal_digits=train_digits,
+                    radius_shrink=args.radius_shrink,
                 )
                 binary_auc_at_best = bin_b.get("binary_auc_normal_vs_rest", None)
             torch.save(
@@ -1305,7 +1428,7 @@ def main():
             macro, per_digit = evaluate(
                 model,
                 c_h,
-                R,
+                _effective_radii(R, args.radius_shrink),
                 te_loader,
                 device,
                 eval_objective,
@@ -1340,60 +1463,36 @@ def main():
         R = ck["R"].to(device)
         if "active_cluster_mask" in ck:
             training_active_mask = np.asarray(ck["active_cluster_mask"], dtype=bool)
+    R_boundary = _effective_radii(R, args.radius_shrink)
 
-    active_mask, prune_info = prune_spheres_from_train(
-        model,
-        c_h,
-        R,
-        tr_loader,
-        device,
-        args.curvature,
-        min_cluster_members=args.min_cluster_members,
-        silhouette_min=args.silhouette_min,
-        silhouette_max_samples=args.silhouette_max_samples,
-        silhouette_seed=args.silhouette_seed,
-    )
-    active_mask = np.logical_and(active_mask, training_active_mask)
+    # Post-processing is intentionally disabled to keep behavior inline-only.
+    active_mask = training_active_mask.copy()
     if not np.any(active_mask):
         active_mask[int(np.argmax(training_active_mask.astype(np.int32)))] = True
-    prune_info["inline_active_cluster_mask"] = training_active_mask.astype(bool).tolist()
-    prune_info["active_cluster_mask_after_inline_and_prune"] = active_mask.astype(bool).tolist()
-    c_h, R, active_mask, split_info = split_overloaded_active_spheres(
-        model,
-        c_h,
-        R,
-        tr_loader,
-        device,
-        args.curvature,
-        active_mask=active_mask,
-        max_cluster_fraction=args.max_cluster_fraction,
-        split_seed=args.split_seed,
+    prune_info = {
+        "post_process_enabled": False,
+        "note": "Post prune/split/hybrid disabled; using inline active mask only.",
+        "inline_active_cluster_mask": training_active_mask.astype(bool).tolist(),
+        "active_cluster_mask_after_inline_and_prune": active_mask.astype(bool).tolist(),
+    }
+    split_info = {
+        "enabled": False,
+        "applied": False,
+        "note": "Post split disabled; inline split (if configured) runs during training.",
+    }
+    hybrid_info = {
+        "enabled": False,
+        "applied": False,
+        "note": "Post hybrid rebalance disabled.",
+    }
+    union_m = union_metrics_test(
+        model, c_h, R, te_loader, device, args.curvature, active_mask, radius_shrink=args.radius_shrink
     )
-    hybrid_info = {"enabled": False, "applied": False}
-    if args.hybrid_rebalance:
-        lb_eff = args.lb_min_cluster_members if args.lb_min_cluster_members is not None else args.min_cluster_members
-        ub_eff = args.ub_max_cluster_fraction if args.ub_max_cluster_fraction is not None else args.max_cluster_fraction
-        c_h, R, active_mask, hybrid_info = hybrid_lb_ub_rebalance(
-            model,
-            c_h,
-            R,
-            tr_loader,
-            device,
-            args.curvature,
-            active_mask=active_mask,
-            lb_min_cluster_members=int(max(0, lb_eff)),
-            ub_max_cluster_fraction=float(max(0.0, ub_eff)),
-            split_seed=args.split_seed,
-            max_iters=args.hybrid_max_iters,
-            hard_cap_enabled=bool(args.hard_cap_reassign),
-            chaos_factor=float(max(0.0, args.chaos_factor)),
-        )
-    union_m = union_metrics_test(model, c_h, R, te_loader, device, args.curvature, active_mask)
 
     macro_pruned, per_pruned = evaluate(
         model,
         c_h,
-        R,
+        _effective_radii(R, args.radius_shrink),
         te_loader,
         device,
         eval_objective,
@@ -1412,12 +1511,13 @@ def main():
         strict_binary_final = evaluate_binary_normal_vs_rest(
             model=model,
             c_h=c_h,
-            R=R,
+            R=_effective_radii(R, args.radius_shrink),
             loader=te_loader,
             device=device,
             curvature=args.curvature,
             active_mask=active_mask,
             normal_digits=train_digits,
+            radius_shrink=args.radius_shrink,
         )
         print(f"[STRICT] binary normal-vs-rest eval: {strict_binary_final}")
 
@@ -1436,6 +1536,13 @@ def main():
         "train_normal_digits": train_digits,
         "test_digits": test_digits,
         "objective": args.objective,
+        "lambda_inside": float(args.lambda_inside),
+        "inside_margin": float(args.inside_margin),
+        "lambda_assign_gap": float(args.lambda_assign_gap),
+        "assign_gap_margin": float(args.assign_gap_margin),
+        "lambda_assign_entropy": float(args.lambda_assign_entropy),
+        "assign_entropy_temp": float(args.assign_entropy_temp),
+        "radius_shrink": float(args.radius_shrink),
         "unsupervised": True,
         "ae_checkpoint": args.ae_stage1_checkpoint_path if args.skip_ae_pretrain else None,
         "prune": prune_info,
@@ -1531,7 +1638,7 @@ def main():
                 plot_tsne_unsupervised(
                     model,
                     c_h,
-                    R,
+                    R_boundary,
                     tsne_ds,
                     device,
                     args.curvature,
@@ -1552,7 +1659,7 @@ def main():
             export_cluster_sample_images(
                 model,
                 c_h,
-                R,
+                R_boundary,
                 ds_ex,
                 device,
                 args.curvature,
@@ -1570,7 +1677,7 @@ def main():
             export_hotspot_class_density(
                 model,
                 c_h,
-                R,
+                R_boundary,
                 ds_hs,
                 device,
                 args.curvature,
@@ -1586,7 +1693,7 @@ def main():
             export_cluster_neural_hotspots(
                 model,
                 c_h,
-                R,
+                R_boundary,
                 ds_nh,
                 device,
                 args.curvature,
