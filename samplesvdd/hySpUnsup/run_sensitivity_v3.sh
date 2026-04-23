@@ -21,8 +21,11 @@ TSNE_VIEWS="all"
 BASE_OBJECTIVE="union-soft"
 BASE_NU="0.05"
 BASE_LAMBDA_SVDD="2e-4"
-BASE_LAMBDA_OVERLAP="1e-4"
+BASE_LAMBDA_OVERLAP="5e-5"
 BASE_MARGIN_OVERLAP="0.01"
+BASE_OVERLAP_WARMUP=10
+BASE_INLINE_PRUNE_WARMUP=12
+BASE_INLINE_SPLIT_WARMUP=15
 
 BASE_N_SPHERES=30
 BASE_LB=50
@@ -79,6 +82,9 @@ run_exp() {
     --inline_split_min_members 128 \
     --inline_split_max_per_epoch 1 \
     --inline_split_every 1 \
+    --overlap_warmup_n_epochs "$BASE_OVERLAP_WARMUP" \
+    --inline_prune_warmup_n_epochs "$BASE_INLINE_PRUNE_WARMUP" \
+    --inline_split_warmup_n_epochs "$BASE_INLINE_SPLIT_WARMUP" \
     "$@"
 }
 

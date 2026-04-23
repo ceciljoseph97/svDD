@@ -921,6 +921,12 @@ def main():
     p.add_argument("--lambda_overlap", type=float, default=1e-2)
     p.add_argument("--margin_overlap", type=float, default=0.05)
     p.add_argument(
+        "--overlap_warmup_n_epochs",
+        type=int,
+        default=0,
+        help="Keep overlap term off for first N epochs (0 = active from epoch 1).",
+    )
+    p.add_argument(
         "--radius_shrink",
         type=float,
         default=1.0,
@@ -937,30 +943,6 @@ def main():
         type=float,
         default=0.0,
         help="Margin used by inside penalty. For union-soft, target is d^2 <= (R - inside_margin)^2.",
-    )
-    p.add_argument(
-        "--lambda_assign_gap",
-        type=float,
-        default=0.0,
-        help="Penalty weight for nearest-vs-second-nearest separation; higher encourages cleaner cluster ownership.",
-    )
-    p.add_argument(
-        "--assign_gap_margin",
-        type=float,
-        default=0.05,
-        help="Target margin on (d2 - d1) using active spheres; penalty is relu(margin - (d2-d1)).",
-    )
-    p.add_argument(
-        "--lambda_assign_entropy",
-        type=float,
-        default=0.0,
-        help="Penalty weight on soft assignment entropy across active spheres (lower entropy -> less mixed clusters).",
-    )
-    p.add_argument(
-        "--assign_entropy_temp",
-        type=float,
-        default=0.5,
-        help="Temperature for assignment entropy softmax over -distance.",
     )
     p.add_argument("--warm_up_n_epochs", type=int, default=5)
     p.add_argument("--eval_every", type=int, default=5)
@@ -1057,6 +1039,18 @@ def main():
     p.add_argument("--inline_split_every", type=int, default=1, help="Apply inline split every N epochs.")
     p.add_argument("--inline_split_seed", type=int, default=42)
     p.add_argument("--inline_split_eps", type=float, default=1e-8)
+    p.add_argument(
+        "--inline_prune_warmup_n_epochs",
+        type=int,
+        default=0,
+        help="Enable inline radius prune only after this many epochs.",
+    )
+    p.add_argument(
+        "--inline_split_warmup_n_epochs",
+        type=int,
+        default=0,
+        help="Enable inline inverse-distance split only after this many epochs.",
+    )
     p.add_argument(
         "--chaos_factor",
         type=float,
@@ -1229,13 +1223,15 @@ def main():
 
     for ep in range(1, args.svdd_n_epochs + 1):
         model.train()
+        overlap_active = ep > int(max(0, args.overlap_warmup_n_epochs))
+        prune_active = bool(args.inline_radius_prune) and (ep > int(max(0, args.inline_prune_warmup_n_epochs)))
+        split_active = ep > int(max(0, args.inline_split_warmup_n_epochs))
+        lambda_overlap_eff = float(args.lambda_overlap) if overlap_active else 0.0
         losses = []
         rec_losses = []
         svdd_losses = []
         ov_losses = []
         in_losses = []
-        gap_losses = []
-        ent_losses = []
         dist_sq_chunks = [[] for _ in range(args.n_spheres)]
         assign_counts = np.zeros(args.n_spheres, dtype=np.int64)
 
@@ -1264,32 +1260,7 @@ def main():
             else:
                 tau_sq = float(max(0.0, args.inside_margin)) ** 2
                 inside_pen = torch.relu(min_sq - tau_sq).mean()
-
-            active_idx = torch.where(am_train)[0]
-            gap_pen = torch.tensor(0.0, device=device)
-            ent_pen = torch.tensor(0.0, device=device)
-            if active_idx.numel() >= 2:
-                dist_active = dist_sq_all[:, active_idx]
-                d_sorted, _ = torch.sort(dist_active, dim=1)
-                d1 = d_sorted[:, 0]
-                d2 = d_sorted[:, 1]
-                gap = d2 - d1
-                gap_pen = torch.relu(float(max(0.0, args.assign_gap_margin)) - gap).mean()
-
-                temp = float(max(args.assign_entropy_temp, 1e-6))
-                logits = -dist_active / temp
-                p_assign = torch.softmax(logits, dim=1)
-                ent = -(p_assign * torch.log(p_assign.clamp_min(1e-12))).sum(dim=1)
-                ent_pen = ent.mean()
-
-            loss = (
-                rec
-                + args.lambda_svdd * sv
-                + args.lambda_overlap * ov
-                + args.lambda_inside * inside_pen
-                + args.lambda_assign_gap * gap_pen
-                + args.lambda_assign_entropy * ent_pen
-            )
+            loss = rec + args.lambda_svdd * sv + lambda_overlap_eff * ov + args.lambda_inside * inside_pen
             opt.zero_grad()
             loss.backward()
             opt.step()
@@ -1298,8 +1269,6 @@ def main():
             svdd_losses.append(float(sv.item()))
             ov_losses.append(float(ov.item()))
             in_losses.append(float(inside_pen.item()))
-            gap_losses.append(float(gap_pen.item()))
-            ent_losses.append(float(ent_pen.item()))
 
             if args.objective == "union-soft" and ep > args.warm_up_n_epochs:
                 with torch.no_grad():
@@ -1310,10 +1279,10 @@ def main():
 
         if args.objective == "union-soft" and ep > args.warm_up_n_epochs:
             R = update_radii_unsupervised(dist_sq_chunks, nu=args.nu, device=torch.device("cpu")).to(device)
-            if args.inline_radius_prune:
+            if prune_active:
                 training_active_mask = _paper_radius_active_mask(assign_counts, args.nu)
                 R = R.masked_fill(~torch.as_tensor(training_active_mask, device=device, dtype=torch.bool), 0.0)
-        elif args.inline_radius_prune:
+        elif prune_active:
             training_active_mask = _paper_radius_active_mask(assign_counts, args.nu)
 
         if args.inline_update_centers and ((ep % max(1, int(args.inline_update_centers_every))) == 0):
@@ -1328,7 +1297,7 @@ def main():
             center_info["epoch"] = int(ep)
             inline_center_history.append(center_info)
 
-        if (ep % max(1, int(args.inline_split_every))) == 0:
+        if split_active and (ep % max(1, int(args.inline_split_every))) == 0:
             c_h, R, training_active_mask, split_inline_info = _inline_inverse_distance_split(
                 model=model,
                 c_h=c_h,
@@ -1348,6 +1317,16 @@ def main():
             inline_split_history.append(split_inline_info)
             if split_inline_info.get("applied", False):
                 print(f"[INLINE-SPLIT] epoch={ep:03d} splits={split_inline_info.get('n_splits', 0)}")
+        elif ep % max(1, int(args.inline_split_every)) == 0:
+            inline_split_history.append(
+                {
+                    "epoch": int(ep),
+                    "enabled": bool(np.isfinite(args.inline_split_inverse_distance_threshold)),
+                    "applied": False,
+                    "warmup_blocked": True,
+                    "note": "inline split warmup not reached",
+                }
+            )
 
         if args.inline_radius_prune:
             inline_history.append(
@@ -1355,6 +1334,8 @@ def main():
                     "epoch": int(ep),
                     "assign_counts": assign_counts.astype(int).tolist(),
                     "active_cluster_mask": training_active_mask.astype(bool).tolist(),
+                    "active": bool(prune_active),
+                    "warmup_blocked": bool(not prune_active),
                 }
             )
 
@@ -1362,9 +1343,13 @@ def main():
         print(
             f"[SVDD-H-UNSUP-v2] {ep:03d}/{args.svdd_n_epochs} "
             f"loss={epoch_loss_mean:.6f} rec={np.mean(rec_losses):.6f} svdd={np.mean(svdd_losses):.6f} "
-            f"overlap={np.mean(ov_losses):.6f} inside={np.mean(in_losses):.6f} "
-            f"assign_gap={np.mean(gap_losses):.6f} assign_ent={np.mean(ent_losses):.6f} "
-            f"R_mean={float(R.mean().item()):.4f}"
+            f"overlap={np.mean(ov_losses):.6f} inside={np.mean(in_losses):.6f} R_mean={float(R.mean().item()):.4f} "
+            f"lambda_overlap_eff={lambda_overlap_eff:.2e}"
+        )
+        print(
+            f"[GATES] epoch={ep:03d} overlap={'on' if overlap_active else 'warmup'} "
+            f"prune={'on' if prune_active else 'warmup/off'} "
+            f"split={'on' if split_active else 'warmup'}"
         )
         if args.inline_radius_prune:
             print(
@@ -1538,10 +1523,6 @@ def main():
         "objective": args.objective,
         "lambda_inside": float(args.lambda_inside),
         "inside_margin": float(args.inside_margin),
-        "lambda_assign_gap": float(args.lambda_assign_gap),
-        "assign_gap_margin": float(args.assign_gap_margin),
-        "lambda_assign_entropy": float(args.lambda_assign_entropy),
-        "assign_entropy_temp": float(args.assign_entropy_temp),
         "radius_shrink": float(args.radius_shrink),
         "unsupervised": True,
         "ae_checkpoint": args.ae_stage1_checkpoint_path if args.skip_ae_pretrain else None,
@@ -1551,6 +1532,7 @@ def main():
         "union_test_metrics_active_spheres": union_m,
         "inline_radius_prune": {
             "enabled": bool(args.inline_radius_prune),
+            "warmup_n_epochs": int(max(0, args.inline_prune_warmup_n_epochs)),
             "history": inline_history,
         },
         "inline_center_update": {
@@ -1563,10 +1545,15 @@ def main():
             "threshold": None
             if not np.isfinite(args.inline_split_inverse_distance_threshold)
             else float(args.inline_split_inverse_distance_threshold),
+            "warmup_n_epochs": int(max(0, args.inline_split_warmup_n_epochs)),
             "every_n_epochs": int(max(1, int(args.inline_split_every))),
             "max_per_epoch": int(max(0, int(args.inline_split_max_per_epoch))),
             "min_members": int(max(1, int(args.inline_split_min_members))),
             "history": inline_split_history,
+        },
+        "overlap_schedule": {
+            "lambda_overlap": float(args.lambda_overlap),
+            "warmup_n_epochs": int(max(0, args.overlap_warmup_n_epochs)),
         },
         "strict_paper_reporting": {
             "enabled": bool(args.strict_paper_reporting),
