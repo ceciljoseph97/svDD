@@ -275,7 +275,7 @@ def train(model, train_loader, test_loader, epochs, lr, out_dir):
     os.makedirs(out_dir, exist_ok=True)
     opt = torch.optim.Adam(model.parameters(), lr=lr)
 
-    # Resume if checkpoint exists
+    # Resume if checkpoint exists - for quick verification and debugging
     ckpt_path = os.path.join(out_dir, 'checkpoint_latest.pth')
     start_epoch = 1
     if os.path.exists(ckpt_path):
@@ -317,17 +317,17 @@ def train(model, train_loader, test_loader, epochs, lr, out_dir):
         Z, Y = _collect_latents(model, test_loader, limit=2000)
         _save_latents_epoch(out_dir, ep, Z, Y)
 
-        # Save latest checkpoint for resume
+        # Save latest checkpoint for resume - for quick verification and debugging
         torch.save({'model_state': model.state_dict(), 'optimizer_state': opt.state_dict(), 'epoch': ep}, ckpt_path)
 
-        # Every 10 epochs: partial reconstruction + generation snapshot
+        # Every 10 epochs: partial reconstruction + generation snapshot - for quick verification and debugging
         if ep % 10 == 0:
             partial_recon_gen_test(model, test_loader, out_dir, ep, k=8, mask_frac=0.5)
 
         history.append((tot / len(train_loader), tot_r / len(train_loader), tot_k / len(train_loader)))
         print(f"Epoch {ep:03d} loss {history[-1][0]:.4f} recon {history[-1][1]:.4f} kl {history[-1][2]:.4f}")
 
-    # sample
+    # sample - for quick verification and debugging
     with torch.no_grad():
         z = torch.randn(16, model.encoder.mu.out_features, device=DEVICE)
         samples = model.decoder(z)
@@ -367,7 +367,7 @@ def train(model, train_loader, test_loader, epochs, lr, out_dir):
         plt.savefig(os.path.join(out_dir, 'tsne.png'), dpi=150)
         plt.close()
 
-        # t-SNE with thumbnail images (subset for clarity/perf)
+        # t-SNE with thumbnail images (subset for clarity/perf) - for quick verification and debugging
         try:
             import matplotlib.offsetbox as offsetbox
             rng = np.random.RandomState(SEED)
@@ -400,7 +400,7 @@ def train(model, train_loader, test_loader, epochs, lr, out_dir):
     except Exception as e:
         print(f"TSNE skipped: {e}")
 
-    # Save full checkpoint for retraining
+    # Save full checkpoint for retraining - for quick verification and debugging
     ckpt = {
         'model_state': model.state_dict(),
         'optimizer_state': opt.state_dict(),
@@ -416,7 +416,7 @@ def load_model(model_path, out_dir):
     """Load model from checkpoint or model file"""
     model = CVAE(in_ch=1, out_ch=1, latent_dim=32).to(DEVICE)
     
-    # Try to load checkpoint
+    # Try to load checkpoint - for quick verification and debugging
     if os.path.exists(os.path.join(out_dir, 'checkpoint_final.pth')):
         ckpt = torch.load(os.path.join(out_dir, 'checkpoint_final.pth'), map_location=DEVICE)
         model.load_state_dict(ckpt['model_state'], strict=False)
@@ -431,7 +431,7 @@ def load_model(model_path, out_dir):
 
 
 def generate_samples(model_path, out_dir, class_id=None, num_samples=16):
-    """Generate samples from trained model"""
+    """Generate samples from trained model - for quick verification and debugging"""
     model = load_model(model_path, out_dir)
     if model is None:
         return
