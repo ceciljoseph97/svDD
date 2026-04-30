@@ -1328,4 +1328,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    print("[DEPRECATED ENTRYPOINT] Use: hySpUnsup/train_hyp_mnist_unsup_unified.py")
+    from train_hyp_mnist_unsup_unified import main as _main_unified
+
+    _main_unified()

@@ -60,7 +60,7 @@ def partial_recon_gen_test(model, test_loader, out_dir, epoch, k=8, mask_frac=0.
         x_mask = x * mask
         recon, _, _ = model(x_mask)
 
-        # Save triptych: original | masked | reconstruction
+        # Save triptych: original | masked | reconstruction Dah
         import matplotlib.pyplot as plt
         fig, axes = plt.subplots(3, k, figsize=(2*k, 6))
         for i in range(k):
@@ -73,7 +73,7 @@ def partial_recon_gen_test(model, test_loader, out_dir, epoch, k=8, mask_frac=0.
         plt.savefig(os.path.join(out_dir, f'partial_epoch_{epoch:03d}.png'), dpi=150, bbox_inches='tight')
         plt.close()
 
-        # Also save contemporaneous generations for comparison
+        # Also save contemporaneous generations for comparison some checks
         z = torch.randn(k, model.encoder.mu.out_features, device=DEVICE)
         gen = model.decoder(z)
         save_grid(list(gen), k, os.path.join(out_dir, f'samples_epoch_{epoch:03d}.png'), title=f'Samples e{epoch}')
@@ -123,7 +123,7 @@ class CVAE(nn.Module):
         self.encoder = Encoder(in_ch, latent_dim)
         self.decoder = Decoder(out_ch, latent_dim)
         # For class-conditional generation (optional)
-        self.class_embedding = nn.Embedding(10, latent_dim)  # MNIST has 10 classes
+        self.class_embedding = nn.Embedding(10, latent_dim)  # MNIST has 10 classes, can change for any other based on the dataset DEMANDS
         self.use_class_cond = False
 
     def reparameterize(self, mu, logvar):
