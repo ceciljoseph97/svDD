@@ -1406,6 +1406,7 @@ def main():
                     radius_shrink=args.radius_shrink,
                 )
                 binary_auc_at_best = bin_b.get("binary_auc_normal_vs_rest", None)
+            os.makedirs(args.xp_path, exist_ok=True)
             torch.save(
                 {
                     "model_state": model.state_dict(),
@@ -1442,6 +1443,7 @@ def main():
                 auc_mode=args.auc_mode,
             )
             print(f"[EVAL] epoch={ep:03d} macro_auc={macro} (auc_mode={args.auc_mode}; monitoring)")
+        os.makedirs(args.xp_path, exist_ok=True)
         torch.save(
             {
                 "model_state": model.state_dict(),
@@ -1587,6 +1589,7 @@ def main():
             ),
         },
     }
+    os.makedirs(args.xp_path, exist_ok=True)
     with open(os.path.join(args.xp_path, "results.json"), "w", encoding="utf-8") as f:
         json.dump(out, f, indent=2)
     print(json.dumps(out, indent=2))
