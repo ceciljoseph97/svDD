@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 24.1) (preloaded format=pdflatex 2025.6.22)  13 MAY 2026 11:47
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 24.1) (preloaded format=pdflatex 2025.6.22)  18 MAY 2026 06:36
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -533,30 +533,30 @@ Underfull \hbox (badness 2134) in paragraph at lines 188--189
 ions of the
  []
 
-<tsne_unsup_v2_nearest_z.png, id=194, 1806.75pt x 790.45313pt>
+<tsne_unsup_v2_nearest_z.png, id=205, 1806.75pt x 790.45313pt>
 File: tsne_unsup_v2_nearest_z.png Graphic file (type png)
 <use tsne_unsup_v2_nearest_z.png>
 Package pdftex.def Info: tsne_unsup_v2_nearest_z.png  used on input line 200.
 (pdftex.def)             Requested size: 490.19843pt x 214.46246pt.
 [4]
-<hotspot_P_digit_given_cluster.png, id=208, 650.43pt x 542.025pt>
+<hotspot_P_digit_given_cluster.png, id=223, 650.43pt x 542.025pt>
 File: hotspot_P_digit_given_cluster.png Graphic file (type png)
 <use hotspot_P_digit_given_cluster.png>
 Package pdftex.def Info: hotspot_P_digit_given_cluster.png  used on input line 
 217.
 (pdftex.def)             Requested size: 438.60315pt x 365.51198pt.
-<SamplesFixed.png, id=212, 1673.50218pt x 1483.04062pt>
+<SamplesFixed.png, id=228, 1673.50218pt x 1483.04062pt>
 File: SamplesFixed.png Graphic file (type png)
 <use SamplesFixed.png>
 Package pdftex.def Info: SamplesFixed.png  used on input line 273.
 (pdftex.def)             Requested size: 138.60077pt x 122.80946pt.
-<NeuralFixed.png, id=213, 447.17062pt x 849.1725pt>
+<NeuralFixed.png, id=229, 447.17062pt x 849.1725pt>
 File: NeuralFixed.png Graphic file (type png)
 <use NeuralFixed.png>
 Package pdftex.def Info: NeuralFixed.png  used on input line 280.
 (pdftex.def)             Requested size: 63.0pt x 119.63486pt.
  [5 <./tsne_unsup_v2_nearest_z.png>]
-Underfull \vbox (badness 10000) has occurred while \output is active []
+Underfull \vbox (badness 7116) has occurred while \output is active []
 
  [6 <./hotspot_P_digit_given_cluster.png> <./SamplesFixed.png> <./NeuralFixed.p
 ng>]
@@ -582,10 +582,10 @@ Package rerunfilecheck Info: File `IEEE-conference-template-062824.out' has not
 (rerunfilecheck)             Checksum: E10B01534D808804D5F7BEE2A0812610;4215.
  ) 
 Here is how much of TeX's memory you used:
- 11607 strings out of 474486
- 183478 string characters out of 5743755
+ 11615 strings out of 474486
+ 183656 string characters out of 5743755
  1950542 words of memory out of 5000000
- 33650 multiletter control sequences out of 15000+600000
+ 33654 multiletter control sequences out of 15000+600000
  596202 words of font info for 108 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,10n,79p,1514b,680s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -608,9 +608,9 @@ ublic/amsfonts/symbols/msbm10.pfb><C:/Users/cecil/AppData/Local/Programs/MiKTeX
 /fonts/type1/urw/times/utmbi8a.pfb><C:/Users/cecil/AppData/Local/Programs/MiKTe
 X/fonts/type1/urw/times/utmr8a.pfb><C:/Users/cecil/AppData/Local/Programs/MiKTe
 X/fonts/type1/urw/times/utmri8a.pfb>
-Output written on IEEE-conference-template-062824.pdf (8 pages, 884547 bytes).
+Output written on IEEE-conference-template-062824.pdf (8 pages, 889610 bytes).
 PDF statistics:
- 351 PDF objects out of 1000 (max. 8388607)
- 87 named destinations out of 1000 (max. 500000)
+ 373 PDF objects out of 1000 (max. 8388607)
+ 91 named destinations out of 1000 (max. 500000)
  197 words of extra memory for PDF output out of 10000 (max. 10000000)
 

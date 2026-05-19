@@ -21,6 +21,11 @@
 \providecommand{\BIBdecl}{\relax}
 \BIBdecl
 
+\bibitem{lecun1998gradient}
+Y.~LeCun, L.~Bottou, Y.~Bengio, and P.~Haffner, ``Gradient-based learning
+  applied to document recognition,'' \emph{Proceedings of the IEEE}, vol.~86,
+  no.~11, pp. 2278--2324, 1998.
+
 \bibitem{tax2004support}
 D.~M. Tax and R.~P. Duin, ``Support vector data description,'' \emph{Machine
   Learning}, vol.~54, no.~1, pp. 45--66, 2004.
@@ -37,13 +42,13 @@ L.~Ruff, R.~Vandermeulen, N.~Goernitz, L.~Deecke, S.~A. Siddiqui, A.~Binder,
 
 \bibitem{ghafoori2020deep}
 Z.~Ghafoori and C.~Leckie, ``Deep multi-sphere support vector data
-  description,'' \emph{Proc. SIAM Int. Conf. Data Mining (SDM)}, pp. 109--117,
-  2020.
+  description,'' in \emph{Proc. SIAM Int. Conf. Data Mining (SDM)}, 2020, pp.
+  109--117.
 
 \bibitem{coates2011analysis}
 A.~Coates, A.~Y. Ng, and H.~Lee, ``An analysis of single-layer networks in
-  unsupervised feature learning,'' \emph{Proc. Int. Conf. Artificial
-  Intelligence and Statistics (AISTATS)}, pp. 215--223, 2011.
+  unsupervised feature learning,'' in \emph{Proc. Int. Conf. Artificial
+  Intelligence and Statistics (AISTATS)}, 2011, pp. 215--223.
 
 \bibitem{hojjati2024dasvdd}
 H.~Hojjati and N.~Armanfard, ``{DASVDD}: Deep autoencoding support vector data
@@ -59,10 +64,24 @@ P.~J. Rousseeuw, ``Silhouettes: A graphical aid to the interpretation and
 M.~Steinbach, G.~Karypis, and V.~Kumar, ``A comparison of document clustering
   techniques,'' in \emph{Proc. KDD Workshop on Text Mining}, 2000.
 
+\bibitem{vandermaaten2008tsne}
+L.~van~der Maaten and G.~Hinton, ``Visualizing data using {t-SNE},''
+  \emph{Journal of Machine Learning Research}, vol.~9, pp. 2579--2605, 2008.
+
+\bibitem{simonyan2014deep}
+K.~Simonyan, A.~Vedaldi, and A.~Zisserman, ``Deep inside convolutional
+  networks: Visualising image classification models and saliency maps,'' in
+  \emph{Proc. Int. Conf. Learning Representations (ICLR Workshop)}, 2014.
+
 \bibitem{pang2021deep}
 G.~Pang, C.~Shen, L.~Cao, and A.~v.~d. Hengel, ``Deep learning for anomaly
   detection: A review,'' \emph{ACM Computing Surveys}, vol.~54, no.~2, pp.
   1--38, 2021.
+
+\bibitem{krizhevsky2012imagenet}
+A.~Krizhevsky, I.~Sutskever, and G.~E. Hinton, ``Imagenet classification with
+  deep convolutional neural networks,'' in \emph{Advances in Neural Information
+  Processing Systems (NeurIPS)}, vol.~25, 2012.
 
 \bibitem{nickel2017poincare}
 M.~Nickel and D.~Kiela, ``Poincar{\'e} embeddings for learning hierarchical

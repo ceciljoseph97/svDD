@@ -1,1 +1,7 @@
 https://www.overleaf.com/project/69d616885dd4bf65b201639d
+
+
+conda env create -f "D:\Doctorate\EngineCheck\SvDDChecks\samplesvdd\ls-samplesvdd.yaml"
+conda activate lsAirsim
+pip install torch==1.9.1+cu111 torchvision==0.10.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
+python -c "import torch; print(torch.__version__, torch.cuda.is_available())"

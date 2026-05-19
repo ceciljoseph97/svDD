@@ -1,0 +1,50 @@
+pcMultiSvdd — Windows install (samplesvdd only)
+================================================
+
+Repo: D:\Doctorate\EngineCheck\SvDDChecks
+Env:  pcMultiSvdd (Python 3.10)
+
+Run in PowerShell (Anaconda Prompt also works).
+
+
+1) Create environment
+---------------------
+conda create -n pcMultiSvdd python=3.10 pip -y
+
+
+2) Activate
+-----------
+conda activate pcMultiSvdd
+
+If the prompt does not show (pcMultiSvdd), run once:
+  conda init powershell
+then open a new terminal and repeat step 2.
+
+
+3) PyTorch (GPU — CUDA 12.4)
+----------------------------
+pip install torch==2.5.1+cu124 torchvision==0.20.1+cu124 --index-url https://download.pytorch.org/whl/cu124
+
+
+4) Remaining packages (numpy, scipy, scikit-learn, matplotlib, pillow) - Change with correct requirements path
+----------------------------------------------------------------------
+pip install -r "D:\Doctorate\EngineCheck\SvDDChecks\requirements-pcMultiSvdd-windows.txt"
+
+
+5) Verify
+---------
+python -c "import torch, numpy, scipy, sklearn, matplotlib, PIL; print(torch.__version__, torch.cuda.is_available())"
+
+
+Optional — CPU-only PyTorch (skip step 3 GPU line, use this instead)
+--------------------------------------------------------------------
+pip install torch==2.5.1+cpu torchvision==0.20.1+cpu --index-url https://download.pytorch.org/whl/cpu
+pip install -r "D:\Doctorate\EngineCheck\SvDDChecks\requirements-pcMultiSvdd-windows.txt"
+
+
+Run training (smoke test- Path change) 
+-------------------------
+cd "D:\Doctorate\EngineCheck\SvDDChecks\samplesvdd"
+conda run -n pcMultiSvdd python hySpUnsup/train_hyp_mnist_unsup_unified.py --mnist_processed_dir "D:/Doctorate/EngineCheck/SvDDChecks/CVAEChecked/Data/MNIST_processed" --xp_path "D:/Doctorate/EngineCheck/SvDDChecks/samplesvdd/hySpUnsup/runs/smoke_norm_all" --device cuda --geometry euclidean --normal_digits all --digits all --strict_paper_reporting --ae_n_epochs 5 --svdd_n_epochs 5 --max_train_samples 512 --max_test_samples 512
+
+More command samples: samplesvdd\commands.txt

@@ -1,0 +1,12 @@
+# Windows x64 — samplesvdd only. Conda env: pcMultiSvdd
+#
+#   conda create -n pcMultiSvdd python=3.10 pip -y
+#   conda activate pcMultiSvdd
+#   pip install torch==2.5.1+cu124 torchvision==0.20.1+cu124 --index-url https://download.pytorch.org/whl/cu124
+#   pip install -r "D:/Doctorate/EngineCheck/SvDDChecks/requirements-pcMultiSvdd-windows.txt"
+
+numpy==1.26.4
+scipy==1.11.4
+scikit-learn==1.4.2
+matplotlib==3.8.4
+pillow==10.3.0

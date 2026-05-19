@@ -2,13 +2,16 @@
 \providecommand\hyper@newdestlabel[2]{}
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{lecun1998gradient}
 \citation{tax2004support}
 \citation{scholkopf2001estimating}
 \citation{ruff2018deep}
 \citation{ghafoori2020deep}
+\citation{lecun1998gradient}
 \@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{section.1}\protected@file@percent }
+\citation{lecun1998gradient}
 \citation{coates2011analysis}
-\citation{ruff2018deep}
+\citation{lecun1998gradient}
 \citation{hojjati2024dasvdd}
 \@writefile{toc}{\contentsline {section}{\numberline {II}Materials and Method}{2}{section.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-A}}Dataset and Preprocessing}{2}{subsection.2.1}\protected@file@percent }
@@ -16,6 +19,9 @@
 \@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Controlled multi-sphere SVDD training.}}{2}{algorithm.1}\protected@file@percent }
 \newlabel{alg:pipeline}{{1}{2}{Training Pipeline}{algorithm.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}Training Pipeline}{2}{subsection.2.3}\protected@file@percent }
+\citation{ruff2018deep}
+\citation{ghafoori2020deep}
+\citation{ghafoori2020deep,ruff2018deep}
 \citation{rousseeuw1987silhouettes}
 \citation{steinbach2000comparison}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-D}}Training Loss}{3}{subsection.2.4}\protected@file@percent }
@@ -29,6 +35,10 @@
 \newlabel{eq:meanD}{{5}{3}{Control Mechanisms}{equation.2.5}{}}
 \newlabel{eq:chaos}{{6}{3}{Control Mechanisms}{equation.2.6}{}}
 \newlabel{eq:radshrink}{{7}{3}{Control Mechanisms}{equation.2.7}{}}
+\citation{vandermaaten2008tsne}
+\citation{simonyan2014deep}
+\citation{vandermaaten2008tsne}
+\citation{vandermaaten2008tsne}
 \newlabel{eq:concentration}{{8}{4}{Control Mechanisms}{equation.2.8}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-F}}Evaluation}{4}{subsection.2.6}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {III}Results}{4}{section.3}\protected@file@percent }
@@ -36,8 +46,9 @@
 \newlabel{sec:full}{{\mbox  {III-A}}{4}{Full-MNIST Structure Discovery}{subsection.3.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Granularity and Structural Similarity}{4}{subsection.3.2}\protected@file@percent }
 \newlabel{sec:struct}{{\mbox  {III-B}}{4}{Granularity and Structural Similarity}{subsection.3.2}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces t-SNE of nearest active-sphere embeddings on the MNIST test split after the control loop. 21 of 30 candidate spheres remain active; pruned heads are marked in the legend.}}{5}{figure.1}\protected@file@percent }
-\newlabel{fig:hulls}{{1}{5}{t-SNE of nearest active-sphere embeddings on the MNIST test split after the control loop. 21 of 30 candidate spheres remain active; pruned heads are marked in the legend}{figure.1}{}}
+\citation{simonyan2014deep}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces \(t\)-SNE \cite  {vandermaaten2008tsne} of nearest active-sphere embeddings on the MNIST test split after the control loop. 21 of 30 candidate spheres remain active; pruned heads are marked in the legend.}}{5}{figure.1}\protected@file@percent }
+\newlabel{fig:hulls}{{1}{5}{\(t\)-SNE \cite {vandermaaten2008tsne} of nearest active-sphere embeddings on the MNIST test split after the control loop. 21 of 30 candidate spheres remain active; pruned heads are marked in the legend}{figure.1}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Top class-coherent active spheres after the control loop, MNIST test split. Entropy in nats; \(n\) is sphere population.}}{5}{table.1}\protected@file@percent }
 \newlabel{tab:topclusters}{{I}{5}{Top class-coherent active spheres after the control loop, MNIST test split. Entropy in nats; \(n\) is sphere population}{table.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Effect of the Control Loop on Sphere Mass}{5}{subsection.3.3}\protected@file@percent }
@@ -56,6 +67,8 @@
 \@writefile{toc}{\contentsline {section}{\numberline {IV}Discussion}{6}{section.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Granularity Knobs and Why a Chaos Factor}{6}{subsection.4.1}\protected@file@percent }
 \citation{pang2021deep}
+\citation{lecun1998gradient}
+\citation{krizhevsky2012imagenet}
 \citation{nickel2017poincare,khrulkov2020hyperbolic}
 \@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Single-run digit-0 OCC AUC under an inline-only configuration (30 candidate heads; overload split and hybrid rebalancing disabled, only the inline active mask is updated). The all-digits configuration of Section~\ref {sec:full} and Table~\ref {tab:massflow} is the only run reported here that uses the full control loop.}}{7}{table.3}\protected@file@percent }
 \newlabel{tab:norm0_auc}{{III}{7}{Single-run digit-0 OCC AUC under an inline-only configuration (30 candidate heads; overload split and hybrid rebalancing disabled, only the inline active mask is updated). The all-digits configuration of Section~\ref {sec:full} and Table~\ref {tab:massflow} is the only run reported here that uses the full control loop}{table.3}{}}
@@ -66,20 +79,25 @@
 \newlabel{sec:occ_tradeoff}{{\mbox  {IV-D}}{7}{Structural Similarity vs.\ One-Class Purity}{subsection.4.4}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-E}}The Vanilla LeNet Backbone is the Next Knob}{7}{subsection.4.5}\protected@file@percent }
 \newlabel{sec:limits}{{\mbox  {IV-E}}{7}{The Vanilla LeNet Backbone is the Next Knob}{subsection.4.5}{}}
+\citation{lecun1998gradient}
 \citation{nickel2017poincare,khrulkov2020hyperbolic}
 \bibstyle{IEEEtran}
 \bibdata{references}
-\bibcite{tax2004support}{1}
-\bibcite{scholkopf2001estimating}{2}
-\bibcite{ruff2018deep}{3}
-\bibcite{ghafoori2020deep}{4}
-\bibcite{coates2011analysis}{5}
-\bibcite{hojjati2024dasvdd}{6}
-\bibcite{rousseeuw1987silhouettes}{7}
-\bibcite{steinbach2000comparison}{8}
-\bibcite{pang2021deep}{9}
-\bibcite{nickel2017poincare}{10}
-\bibcite{khrulkov2020hyperbolic}{11}
+\bibcite{lecun1998gradient}{1}
+\bibcite{tax2004support}{2}
+\bibcite{scholkopf2001estimating}{3}
+\bibcite{ruff2018deep}{4}
+\bibcite{ghafoori2020deep}{5}
+\bibcite{coates2011analysis}{6}
+\bibcite{hojjati2024dasvdd}{7}
+\bibcite{rousseeuw1987silhouettes}{8}
+\bibcite{steinbach2000comparison}{9}
+\bibcite{vandermaaten2008tsne}{10}
+\bibcite{simonyan2014deep}{11}
+\bibcite{pang2021deep}{12}
+\bibcite{krizhevsky2012imagenet}{13}
+\bibcite{nickel2017poincare}{14}
+\bibcite{khrulkov2020hyperbolic}{15}
 \@writefile{toc}{\contentsline {section}{\numberline {V}Conclusion and Future Work}{8}{section.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{References}{8}{section*.3}\protected@file@percent }
 \gdef \@abspage@last{8}
